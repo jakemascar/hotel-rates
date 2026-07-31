@@ -1,0 +1,1169 @@
+.hr-booking-rate-field {
+        display: block;
+}
+
+.hr-booking-rate-field[hidden] {
+        display: none !important;
+}
+
+.hr-booking-rate-select {
+        width: 100%;
+}
+
+.hr-booking-rate-help {
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #5b5b5b;
+}
+
+.hr-package-booking-field {
+        display: block;
+}
+
+.hr-tour-booking-field {
+        display: block;
+}
+
+.hr-day-tour-booking-field,
+.hr-joiner-booking-field {
+        display: block;
+}
+
+.hr-package-booking-form button[type="submit"]:hover,
+.hr-package-booking-form input[type="submit"]:hover,
+.hr-package-booking-form .single_add_to_cart_button:hover,
+.hr-package-booking-form .booking-form-submit:hover,
+.hr-day-tour-booking-form button[type="submit"]:hover,
+.hr-day-tour-booking-form input[type="submit"]:hover,
+.hr-day-tour-booking-form .single_add_to_cart_button:hover,
+.hr-day-tour-booking-form .booking-form-submit:hover,
+.hr-joiner-booking-form button[type="submit"]:hover,
+.hr-joiner-booking-form input[type="submit"]:hover,
+.hr-joiner-booking-form .single_add_to_cart_button:hover,
+.hr-joiner-booking-form .booking-form-submit:hover,
+.hr-tour-booking-form button[type="submit"]:hover,
+.hr-tour-booking-form input[type="submit"]:hover,
+.hr-tour-booking-form .single_add_to_cart_button:hover,
+.hr-tour-booking-form .booking-form-submit:hover,
+.hr-airport-transfer-booking-form button[type="submit"]:hover,
+.hr-airport-transfer-booking-form input[type="submit"]:hover,
+.hr-airport-transfer-booking-form .single_add_to_cart_button:hover,
+.hr-airport-transfer-booking-form .booking-form-submit:hover,
+.hr-motorbike-booking-form button[type="submit"]:hover,
+.hr-motorbike-booking-form input[type="submit"]:hover,
+.hr-motorbike-booking-form .single_add_to_cart_button:hover,
+.hr-motorbike-booking-form .booking-form-submit:hover,
+.hr-boat-booking-form button[type="submit"]:hover,
+.hr-boat-booking-form input[type="submit"]:hover,
+.hr-boat-booking-form .single_add_to_cart_button:hover,
+.hr-boat-booking-form .booking-form-submit:hover,
+.hr-self-drive-booking-form button[type="submit"]:hover,
+.hr-self-drive-booking-form input[type="submit"]:hover,
+.hr-self-drive-booking-form .single_add_to_cart_button:hover,
+.hr-self-drive-booking-form .booking-form-submit:hover,
+.hr-destination-tour-booking-form button[type="submit"]:hover,
+.hr-destination-tour-booking-form input[type="submit"]:hover,
+.hr-destination-tour-booking-form .single_add_to_cart_button:hover,
+.hr-destination-tour-booking-form .booking-form-submit:hover,
+.hr-pickup-dropoff-booking-form button[type="submit"]:hover,
+.hr-pickup-dropoff-booking-form input[type="submit"]:hover,
+.hr-pickup-dropoff-booking-form .single_add_to_cart_button:hover,
+.hr-pickup-dropoff-booking-form .booking-form-submit:hover,
+.hr-port-transfer-booking-form button[type="submit"]:hover,
+.hr-port-transfer-booking-form input[type="submit"]:hover,
+.hr-port-transfer-booking-form .single_add_to_cart_button:hover,
+.hr-port-transfer-booking-form .booking-form-submit:hover {
+        background-color: #0687c1 !important;
+        border-color: #0687c1 !important;
+        color: #ffffff !important;
+}
+
+.hr-package-booking-form button[type="submit"]:focus-visible,
+.hr-package-booking-form input[type="submit"]:focus-visible,
+.hr-package-booking-form .single_add_to_cart_button:focus-visible,
+.hr-package-booking-form .booking-form-submit:focus-visible,
+.hr-day-tour-booking-form button[type="submit"]:focus-visible,
+.hr-day-tour-booking-form input[type="submit"]:focus-visible,
+.hr-day-tour-booking-form .single_add_to_cart_button:focus-visible,
+.hr-day-tour-booking-form .booking-form-submit:focus-visible,
+.hr-joiner-booking-form button[type="submit"]:focus-visible,
+.hr-joiner-booking-form input[type="submit"]:focus-visible,
+.hr-joiner-booking-form .single_add_to_cart_button:focus-visible,
+.hr-joiner-booking-form .booking-form-submit:focus-visible,
+.hr-tour-booking-form button[type="submit"]:focus-visible,
+.hr-tour-booking-form input[type="submit"]:focus-visible,
+.hr-tour-booking-form .single_add_to_cart_button:focus-visible,
+.hr-tour-booking-form .booking-form-submit:focus-visible,
+.hr-airport-transfer-booking-form button[type="submit"]:focus-visible,
+.hr-airport-transfer-booking-form input[type="submit"]:focus-visible,
+.hr-airport-transfer-booking-form .single_add_to_cart_button:focus-visible,
+.hr-airport-transfer-booking-form .booking-form-submit:focus-visible,
+.hr-motorbike-booking-form button[type="submit"]:focus-visible,
+.hr-motorbike-booking-form input[type="submit"]:focus-visible,
+.hr-motorbike-booking-form .single_add_to_cart_button:focus-visible,
+.hr-motorbike-booking-form .booking-form-submit:focus-visible,
+.hr-boat-booking-form button[type="submit"]:focus-visible,
+.hr-boat-booking-form input[type="submit"]:focus-visible,
+.hr-boat-booking-form .single_add_to_cart_button:focus-visible,
+.hr-boat-booking-form .booking-form-submit:focus-visible,
+.hr-self-drive-booking-form button[type="submit"]:focus-visible,
+.hr-self-drive-booking-form input[type="submit"]:focus-visible,
+.hr-self-drive-booking-form .single_add_to_cart_button:focus-visible,
+.hr-self-drive-booking-form .booking-form-submit:focus-visible,
+.hr-destination-tour-booking-form button[type="submit"]:focus-visible,
+.hr-destination-tour-booking-form input[type="submit"]:focus-visible,
+.hr-destination-tour-booking-form .single_add_to_cart_button:focus-visible,
+.hr-destination-tour-booking-form .booking-form-submit:focus-visible,
+.hr-pickup-dropoff-booking-form button[type="submit"]:focus-visible,
+.hr-pickup-dropoff-booking-form input[type="submit"]:focus-visible,
+.hr-pickup-dropoff-booking-form .single_add_to_cart_button:focus-visible,
+.hr-pickup-dropoff-booking-form .booking-form-submit:focus-visible,
+.hr-port-transfer-booking-form button[type="submit"]:focus-visible,
+.hr-port-transfer-booking-form input[type="submit"]:focus-visible,
+.hr-port-transfer-booking-form .single_add_to_cart_button:focus-visible,
+.hr-port-transfer-booking-form .booking-form-submit:focus-visible {
+        outline: 3px solid rgba(56, 189, 248, 0.35);
+        outline-offset: 2px;
+}
+
+.hr-tour-pickup-fields {
+        margin: 14px 0;
+}
+
+.hr-tour-field-group {
+        margin-top: 12px;
+}
+
+.hr-tour-field-group input {
+        width: 100%;
+}
+
+.hr-airport-transfer-booking-field {
+        display: block;
+}
+
+.hr-package-group {
+        margin-top: 14px;
+}
+
+.hr-package-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+}
+
+.hr-package-select {
+        width: 100%;
+}
+
+.hr-package-booking-date-range {
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.5;
+        font-weight: 600;
+        color: #1d2327;
+}
+
+.hr-package-booking-date-range:empty {
+        display: none;
+}
+
+.hr-package-date-range-input-wrap {
+        position: relative;
+        display: block;
+}
+
+.hr-package-date-range-input-wrap .hr-package-date-range-source {
+        color: transparent !important;
+}
+
+.hr-package-date-range-input-wrap .hr-package-date-range-source:focus {
+        color: transparent !important;
+}
+
+.hr-package-date-range-input-display {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        color: #1d2327;
+        pointer-events: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+}
+
+.hr-package-date-range-input-display:empty {
+        display: none;
+}
+
+.flatpickr-calendar .flatpickr-day.hr-package-calendar-date-in-range,
+.ui-datepicker-calendar td.hr-package-calendar-date-in-range a,
+.ui-datepicker-calendar td.hr-package-calendar-date-in-range span,
+.xdsoft_datetimepicker .xdsoft_calendar td.hr-package-calendar-date-in-range:not(.xdsoft_disabled),
+.datepicker table tr td.hr-package-calendar-date-in-range,
+.datepicker table tr td span.hr-package-calendar-date-in-range,
+[data-hr-calendar-date].hr-package-calendar-date-in-range {
+        background: #0687c1 !important;
+        border-color: #0687c1 !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
+}
+
+.flatpickr-calendar .flatpickr-day.hr-package-calendar-date-start,
+.flatpickr-calendar .flatpickr-day.hr-package-calendar-date-end,
+.ui-datepicker-calendar td.hr-package-calendar-date-start a,
+.ui-datepicker-calendar td.hr-package-calendar-date-start span,
+.ui-datepicker-calendar td.hr-package-calendar-date-end a,
+.ui-datepicker-calendar td.hr-package-calendar-date-end span,
+.xdsoft_datetimepicker .xdsoft_calendar td.hr-package-calendar-date-start:not(.xdsoft_disabled),
+.xdsoft_datetimepicker .xdsoft_calendar td.hr-package-calendar-date-end:not(.xdsoft_disabled),
+.datepicker table tr td.hr-package-calendar-date-start,
+.datepicker table tr td.hr-package-calendar-date-end,
+.datepicker table tr td span.hr-package-calendar-date-start,
+.datepicker table tr td span.hr-package-calendar-date-end,
+[data-hr-calendar-date].hr-package-calendar-date-start,
+[data-hr-calendar-date].hr-package-calendar-date-end {
+        background: #0687c1 !important;
+        border-color: #0687c1 !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
+}
+
+.hr-package-booking-total {
+        margin: 14px 0 0;
+        font-weight: 600;
+}
+
+.hr-package-booking-form .ovabrw-wrapper-guestspicker .guests-price {
+        display: none !important;
+}
+
+.hr-package-booking-breakdown {
+        margin: 14px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.hr-package-booking-breakdown[hidden] {
+        display: none !important;
+}
+
+.hr-package-breakdown-title {
+        margin-bottom: 8px;
+        font-weight: 700;
+}
+
+.hr-package-breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        font-size: 13px;
+        line-height: 1.35;
+}
+
+.hr-package-breakdown-label {
+        min-width: 0;
+        flex: 1 1 auto;
+}
+
+.hr-package-breakdown-label span,
+.hr-package-breakdown-label small {
+        display: block;
+}
+
+.hr-package-breakdown-label small {
+        margin-top: 2px;
+        color: #5f6368;
+}
+
+.hr-package-breakdown-amount {
+        flex: 0 0 auto;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+}
+
+.hr-package-breakdown-row-total {
+        margin-top: 6px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        font-weight: 700;
+}
+
+.hr-tour-booking-total {
+        margin: 14px 0 0;
+        font-weight: 600;
+}
+
+.hr-tour-addon-selectors {
+        margin-top: 14px;
+}
+
+.hr-tour-addon-selectors[hidden] {
+        display: none !important;
+}
+
+.hr-tour-addon-title {
+        margin: 0 0 10px;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.3;
+}
+
+.hr-tour-addon-group {
+        margin-top: 12px;
+}
+
+.hr-tour-addon-select {
+        width: 100%;
+}
+
+.hr-tour-child-guest-row .guests-price,
+.hr-tour-infant-guest-row .guests-price {
+        display: inline-block;
+}
+
+.hr-airport-transfer-route-selectors {
+        margin-top: 14px;
+}
+
+.hr-airport-transfer-direction-group + .hr-airport-transfer-route-group {
+        margin-top: 12px;
+}
+
+.hr-airport-transfer-direction-select {
+        width: 100%;
+}
+
+.hr-airport-transfer-route-select {
+        width: 100%;
+}
+
+.hr-airport-transfer-booking-total {
+        margin: 14px 0 0;
+        font-weight: 600;
+}
+
+.hr-motorbike-booking-field,
+.hr-boat-booking-field,
+.hr-self-drive-booking-field,
+.hr-destination-tour-booking-field,
+.hr-pickup-dropoff-booking-field,
+.hr-port-transfer-booking-field {
+        display: block;
+}
+
+.hr-destination-tour-selectors,
+.hr-pickup-dropoff-selectors {
+        display: block;
+}
+
+.hr-destination-tour-selectors .hr-destination-tour-field-group:first-child,
+.hr-pickup-dropoff-selectors .hr-pickup-dropoff-route-grid:first-child {
+        margin-top: 0;
+}
+
+.hr-self-drive-trip-details {
+        margin: 12px 0 0;
+}
+
+.hr-self-drive-trip-details:empty {
+        display: none;
+}
+
+.hr-motorbike-models-title,
+.hr-motorbike-handover-title,
+.hr-boat-rates-title,
+.hr-self-drive-vehicles-title,
+.hr-self-drive-handover-title,
+.hr-destination-tour-pickup-title,
+.hr-destination-tour-addons-title,
+.hr-pickup-dropoff-addons-title {
+        margin: 12px 0 8px;
+        font-weight: 600;
+}
+
+.hr-motorbike-model-list,
+.hr-self-drive-vehicle-list {
+        display: grid;
+        gap: 8px;
+}
+
+.hr-motorbike-model-row,
+.hr-self-drive-vehicle-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+}
+
+.hr-motorbike-model-name,
+.hr-self-drive-vehicle-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-motorbike-model-rate,
+.hr-self-drive-vehicle-rate {
+        white-space: nowrap;
+        font-size: 13px;
+}
+
+.hr-destination-tour-service-name {
+        margin: 22px 0 14px;
+        font-weight: 500;
+        line-height: 1.35;
+}
+
+.hr-self-drive-guest-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+}
+
+.hr-destination-tour-guest-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+}
+
+.hr-boat-passenger-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+}
+
+.hr-port-transfer-passenger-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+}
+
+.hr-pickup-dropoff-passenger-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px 38px 26px;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+}
+
+.hr-self-drive-guest-label {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-destination-tour-guest-label {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-boat-passenger-label {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-port-transfer-passenger-label {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-pickup-dropoff-passenger-label {
+        min-width: 0;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+}
+
+.hr-motorbike-qty-btn,
+.hr-boat-qty-btn,
+.hr-self-drive-qty-btn,
+.hr-destination-tour-qty-btn,
+.hr-pickup-dropoff-qty-btn,
+.hr-port-transfer-qty-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px !important;
+        min-width: 26px !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        padding: 0 !important;
+        border: 0;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+}
+
+.hr-motorbike-model-qty,
+.hr-boat-passenger-count,
+.hr-self-drive-vehicle-qty,
+.hr-self-drive-guest-count,
+.hr-destination-tour-guest-count,
+.hr-pickup-dropoff-passenger-count,
+.hr-port-transfer-passenger-count {
+        width: 38px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        text-align: center;
+        line-height: 32px;
+        -moz-appearance: textfield;
+        appearance: textfield;
+        box-sizing: border-box;
+}
+
+.hr-motorbike-model-qty::-webkit-inner-spin-button,
+.hr-motorbike-model-qty::-webkit-outer-spin-button,
+.hr-boat-passenger-count::-webkit-inner-spin-button,
+.hr-boat-passenger-count::-webkit-outer-spin-button,
+.hr-self-drive-vehicle-qty::-webkit-inner-spin-button,
+.hr-self-drive-vehicle-qty::-webkit-outer-spin-button,
+.hr-self-drive-guest-count::-webkit-inner-spin-button,
+.hr-self-drive-guest-count::-webkit-outer-spin-button,
+.hr-destination-tour-guest-count::-webkit-inner-spin-button,
+.hr-destination-tour-guest-count::-webkit-outer-spin-button,
+.hr-pickup-dropoff-passenger-count::-webkit-inner-spin-button,
+.hr-pickup-dropoff-passenger-count::-webkit-outer-spin-button,
+.hr-port-transfer-passenger-count::-webkit-inner-spin-button,
+.hr-port-transfer-passenger-count::-webkit-outer-spin-button {
+        margin: 0;
+        -webkit-appearance: none;
+}
+
+.hr-motorbike-field-group,
+.hr-boat-field-group,
+.hr-self-drive-field-group,
+.hr-self-drive-return-date-field,
+.hr-destination-tour-field-group,
+.hr-pickup-dropoff-field-group,
+.hr-port-transfer-field-group,
+.hr-port-transfer-return-date-field {
+        margin-top: 12px;
+}
+
+.hr-pickup-dropoff-route-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+        align-items: end;
+        gap: 8px;
+}
+
+.hr-pickup-dropoff-route-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+}
+
+.hr-pickup-dropoff-swap-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        padding: 0 !important;
+        border: 0;
+        background: transparent;
+        color: #333;
+        cursor: pointer;
+        font-size: 24px;
+        line-height: 1;
+}
+
+.hr-port-transfer-location-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+        align-items: end;
+        gap: 8px;
+}
+
+.hr-port-transfer-location-field label,
+.hr-port-transfer-return-dropoff-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+}
+
+.hr-port-transfer-swap-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        padding: 0 !important;
+        border: 0;
+        background: transparent;
+        color: #333;
+        cursor: pointer;
+        font-size: 24px;
+        line-height: 1;
+}
+
+.hr-port-transfer-date-time-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 12px;
+}
+
+.hr-motorbike-start-time-select,
+.hr-motorbike-days-select,
+.hr-motorbike-delivery-address,
+.hr-motorbike-document-input,
+.hr-boat-rate-select,
+.hr-boat-boarding-time-select,
+.hr-self-drive-start-time-select,
+.hr-self-drive-return-time-select,
+.hr-self-drive-delivery-address,
+.hr-self-drive-return-date-input,
+.hr-self-drive-hotel-name-input,
+.hr-destination-tour-date-input,
+.hr-destination-tour-hotel-input,
+.hr-destination-tour-pickup-time-select,
+.hr-destination-tour-destination-select,
+.hr-destination-tour-pickup-addon-select,
+.hr-pickup-dropoff-from-select,
+.hr-pickup-dropoff-to-select,
+.hr-pickup-dropoff-date-input,
+.hr-pickup-dropoff-pickup-time-select,
+.hr-pickup-dropoff-hotel-input,
+.hr-port-transfer-type-select,
+.hr-port-transfer-from-select,
+.hr-port-transfer-to-select,
+.hr-port-transfer-date-input,
+.hr-port-transfer-time-input,
+.hr-port-transfer-flight-input,
+.hr-port-transfer-hotel-input,
+.hr-port-transfer-return-date-input,
+.hr-port-transfer-return-time-select,
+.hr-port-transfer-return-dropoff-select {
+        width: 100%;
+        min-height: 40px !important;
+        padding: 8px 12px !important;
+        font-size: 14px;
+        line-height: 1.35;
+        box-sizing: border-box;
+}
+
+.hr-port-transfer-return-date-input,
+.hr-port-transfer-return-time-select {
+        height: 40px !important;
+}
+
+.hr-port-transfer-from-select,
+.hr-port-transfer-to-select {
+        padding-left: 10px !important;
+        padding-right: 30px !important;
+        font-size: 12px;
+        text-overflow: ellipsis;
+}
+
+.hr-motorbike-document-label,
+.hr-self-drive-return-date-field label,
+.hr-destination-tour-date-field label,
+.hr-pickup-dropoff-date-field label,
+.hr-port-transfer-return-date-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+}
+
+.hr-destination-tour-addons {
+        margin-top: 12px;
+}
+
+.hr-port-transfer-roundtrip-fields[hidden] {
+        display: none !important;
+}
+
+.hr-port-transfer-addons {
+        margin-top: 12px;
+}
+
+.hr-pickup-dropoff-addons {
+        margin-top: 12px;
+}
+
+.hr-pickup-dropoff-addons-title {
+        margin-bottom: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+}
+
+.hr-port-transfer-addons-title {
+        margin-bottom: 6px;
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+}
+
+.hr-port-transfer-addon-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+        line-height: 1.35;
+}
+
+.hr-pickup-dropoff-addon-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+        line-height: 1.35;
+}
+
+.hr-boat-upgrade-fee-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 10px 0;
+        line-height: 1.35;
+}
+
+.hr-port-transfer-addon-option {
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        accent-color: #004a7c;
+}
+
+.hr-boat-upgrade-fee-option {
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        accent-color: #004a7c;
+}
+
+.hr-pickup-dropoff-addon-option {
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        accent-color: #004a7c;
+}
+
+.hr-motorbike-handover-options,
+.hr-self-drive-handover-options {
+        margin-top: 12px;
+}
+
+.hr-motorbike-handover-options label,
+.hr-self-drive-handover-options label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        line-height: 1.35;
+}
+
+.hr-motorbike-handover-option,
+.hr-self-drive-handover-option {
+        display: inline-block !important;
+        flex: 0 0 16px;
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        vertical-align: middle;
+        accent-color: #004a7c;
+}
+
+.hr-motorbike-booking-total,
+.hr-boat-booking-total,
+.hr-self-drive-booking-total,
+.hr-destination-tour-booking-total,
+.hr-pickup-dropoff-booking-total,
+.hr-port-transfer-booking-total {
+        margin: 14px 0 0;
+        font-weight: 600;
+}
+
+@media (max-width: 480px) {
+        .hr-motorbike-model-row,
+        .hr-self-drive-vehicle-row {
+                grid-template-columns: minmax(0, 1fr) auto 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-self-drive-guest-row {
+                grid-template-columns: minmax(0, 1fr) 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-destination-tour-guest-row {
+                grid-template-columns: minmax(0, 1fr) 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-boat-passenger-row {
+                grid-template-columns: minmax(0, 1fr) 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-port-transfer-passenger-row {
+                grid-template-columns: minmax(0, 1fr) 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-pickup-dropoff-passenger-row {
+                grid-template-columns: minmax(0, 1fr) 24px 36px 24px;
+                gap: 5px;
+        }
+
+        .hr-motorbike-model-qty,
+        .hr-boat-passenger-count,
+        .hr-self-drive-vehicle-qty,
+        .hr-self-drive-guest-count,
+        .hr-destination-tour-guest-count,
+        .hr-pickup-dropoff-passenger-count,
+        .hr-port-transfer-passenger-count {
+                width: 36px !important;
+        }
+
+        .hr-motorbike-qty-btn,
+        .hr-boat-qty-btn,
+        .hr-self-drive-qty-btn,
+        .hr-destination-tour-qty-btn,
+        .hr-pickup-dropoff-qty-btn,
+        .hr-port-transfer-qty-btn {
+                width: 24px !important;
+                min-width: 24px !important;
+                height: 24px !important;
+                min-height: 24px !important;
+        }
+
+        .hr-pickup-dropoff-route-grid,
+        .hr-port-transfer-location-grid,
+        .hr-port-transfer-date-time-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+        }
+
+        .hr-pickup-dropoff-swap-button {
+                justify-self: end;
+                height: 28px !important;
+                min-height: 28px !important;
+        }
+
+        .hr-port-transfer-swap-button {
+                justify-self: end;
+                height: 28px !important;
+                min-height: 28px !important;
+        }
+}
+
+.hr-legacy-airport-transfer-field-hidden {
+        display: none !important;
+}
+
+.hr-self-drive-return-calendar {
+        position: absolute;
+        z-index: 9999999;
+        max-width: calc(100vw - 24px);
+        padding: 10px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+        color: #111;
+        font-size: 14px;
+        line-height: 1.2;
+}
+
+.hr-self-drive-return-calendar[hidden] {
+        display: none !important;
+}
+
+.hr-self-drive-return-calendar-header {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+}
+
+.hr-self-drive-return-calendar-title {
+        min-width: 0;
+        text-align: center;
+        font-weight: 700;
+}
+
+.hr-self-drive-return-calendar-nav,
+.hr-self-drive-return-calendar-day {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        line-height: 1;
+}
+
+.hr-self-drive-return-calendar-nav {
+        width: 34px;
+        height: 30px;
+        font-size: 18px;
+        font-weight: 700;
+}
+
+.hr-self-drive-return-calendar-nav:hover,
+.hr-self-drive-return-calendar-day:hover {
+        background: #eaf3fa;
+}
+
+.hr-self-drive-return-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+}
+
+.hr-self-drive-return-calendar-weekdays {
+        margin-bottom: 6px;
+        color: #555;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+}
+
+.hr-self-drive-return-calendar-day,
+.hr-self-drive-return-calendar-empty {
+        aspect-ratio: 1;
+}
+
+.hr-self-drive-return-calendar-day {
+        width: 100%;
+        padding: 0;
+        font-weight: 600;
+}
+
+.hr-self-drive-return-calendar-day.is-selected {
+        background: #004a7c;
+        color: #fff;
+}
+
+.hr-self-drive-return-calendar-day.is-disabled,
+.hr-self-drive-return-calendar-day:disabled {
+        cursor: not-allowed;
+        opacity: 0.35;
+}
+
+.hr-self-drive-return-calendar-day.is-disabled:hover,
+.hr-self-drive-return-calendar-day:disabled:hover {
+        background: transparent;
+}
+
+.hr-arrival-time-label {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        width: auto !important;
+        margin: 0 0 8px !important;
+        font-weight: 600;
+        color: inherit;
+}
+
+div.hr-arrival-time-labeled:has(.hide-label-select) > label.hr-arrival-time-label,
+div.hr-arrival-time-labeled > label.hr-arrival-time-native-label {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        width: auto !important;
+        margin: 0 0 8px !important;
+}
+
+.hr-package-booking-form .ajax-show-total,
+.hr-package-booking-form .ovabrw-ajax-total,
+.hr-day-tour-booking-form .ajax-show-total,
+.hr-day-tour-booking-form .ovabrw-ajax-total,
+.hr-joiner-booking-form .ajax-show-total,
+.hr-joiner-booking-form .ovabrw-ajax-total,
+.hr-tour-booking-form .ajax-show-total,
+.hr-tour-booking-form .ovabrw-ajax-total,
+.hr-airport-transfer-booking-form .ajax-show-total,
+.hr-airport-transfer-booking-form .ovabrw-ajax-total,
+.hr-motorbike-booking-form .ajax-show-total,
+.hr-motorbike-booking-form .ovabrw-ajax-total,
+.hr-boat-booking-form .ajax-show-total,
+.hr-boat-booking-form .ovabrw-ajax-total,
+.hr-self-drive-booking-form .ajax-show-total,
+.hr-self-drive-booking-form .ovabrw-ajax-total,
+.hr-destination-tour-booking-form .ajax-show-total,
+.hr-destination-tour-booking-form .ovabrw-ajax-total,
+.hr-pickup-dropoff-booking-form .ajax-show-total,
+.hr-pickup-dropoff-booking-form .ovabrw-ajax-total,
+.hr-port-transfer-booking-form .ajax-show-total,
+.hr-port-transfer-booking-form .ovabrw-ajax-total {
+        display: none !important;
+}
+
+.woocommerce-cart-form .variation:has(.variation-TransferType),
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions),
+.woocommerce-cart-form .variation:has(.variation-DropoffTo),
+.woocommerce-cart-form .variation:has(.variation-RouteRate),
+.woocommerce-cart-form .variation:has(.variation-TouristDestination),
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType),
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions),
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo),
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate),
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) {
+        display: grid;
+        grid-template-columns: minmax(130px, 42%) 1fr;
+        gap: 10px 18px;
+        margin: 18px 0 0;
+        font-size: 15px;
+        line-height: 1.35;
+}
+
+.woocommerce-cart-form .variation:has(.variation-TransferType) dt,
+.woocommerce-cart-form .variation:has(.variation-TransferType) dd,
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions) dt,
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions) dd,
+.woocommerce-cart-form .variation:has(.variation-DropoffTo) dt,
+.woocommerce-cart-form .variation:has(.variation-DropoffTo) dd,
+.woocommerce-cart-form .variation:has(.variation-RouteRate) dt,
+.woocommerce-cart-form .variation:has(.variation-RouteRate) dd,
+.woocommerce-cart-form .variation:has(.variation-TouristDestination) dt,
+.woocommerce-cart-form .variation:has(.variation-TouristDestination) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) dd {
+        float: none;
+        clear: none;
+        margin: 0;
+        padding: 0;
+}
+
+.woocommerce-cart-form .variation:has(.variation-TransferType) dt,
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions) dt,
+.woocommerce-cart-form .variation:has(.variation-DropoffTo) dt,
+.woocommerce-cart-form .variation:has(.variation-RouteRate) dt,
+.woocommerce-cart-form .variation:has(.variation-TouristDestination) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate) dt,
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) dt {
+        font-weight: 700;
+        color: #111;
+}
+
+.woocommerce-cart-form .variation:has(.variation-TransferType) dd,
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions) dd,
+.woocommerce-cart-form .variation:has(.variation-DropoffTo) dd,
+.woocommerce-cart-form .variation:has(.variation-RouteRate) dd,
+.woocommerce-cart-form .variation:has(.variation-TouristDestination) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate) dd,
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) dd {
+        color: #222;
+}
+
+.woocommerce-cart-form .variation:has(.variation-TransferType) dd p,
+.woocommerce-cart-form .variation:has(.variation-HandoverOptions) dd p,
+.woocommerce-cart-form .variation:has(.variation-DropoffTo) dd p,
+.woocommerce-cart-form .variation:has(.variation-RouteRate) dd p,
+.woocommerce-cart-form .variation:has(.variation-TouristDestination) dd p,
+.woocommerce-checkout-review-order .variation:has(.variation-TransferType) dd p,
+.woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions) dd p,
+.woocommerce-checkout-review-order .variation:has(.variation-DropoffTo) dd p,
+.woocommerce-checkout-review-order .variation:has(.variation-RouteRate) dd p,
+.woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) dd p {
+        margin: 0;
+        padding: 0;
+}
+
+.woocommerce-checkout-review-order .hr-destination-tour-cart-item-name,
+.woocommerce-checkout-review-order .hr-pickup-dropoff-cart-item-name {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+}
+
+.woocommerce-checkout-review-order .hr-destination-tour-cart-item-title,
+.woocommerce-checkout-review-order .hr-pickup-dropoff-cart-item-title {
+        min-width: 0;
+        overflow-wrap: anywhere;
+}
+
+.woocommerce-checkout-review-order .hr-destination-tour-remove,
+.woocommerce-checkout-review-order .hr-pickup-dropoff-remove {
+        flex: 0 0 auto;
+        margin-left: auto;
+        text-align: center;
+        line-height: 1;
+}
+
+@media (max-width: 480px) {
+        .woocommerce-cart-form .variation:has(.variation-TransferType),
+        .woocommerce-cart-form .variation:has(.variation-HandoverOptions),
+        .woocommerce-cart-form .variation:has(.variation-DropoffTo),
+        .woocommerce-cart-form .variation:has(.variation-RouteRate),
+        .woocommerce-cart-form .variation:has(.variation-TouristDestination),
+        .woocommerce-checkout-review-order .variation:has(.variation-TransferType),
+        .woocommerce-checkout-review-order .variation:has(.variation-HandoverOptions),
+        .woocommerce-checkout-review-order .variation:has(.variation-DropoffTo),
+        .woocommerce-checkout-review-order .variation:has(.variation-RouteRate),
+        .woocommerce-checkout-review-order .variation:has(.variation-TouristDestination) {
+                grid-template-columns: minmax(120px, 45%) 1fr;
+                gap: 8px 12px;
+                font-size: 14px;
+        }
+}

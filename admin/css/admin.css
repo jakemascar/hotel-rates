@@ -1,0 +1,945 @@
+/* ======================================================================
+   Hotel Rates Plugin — Admin Styles
+   ====================================================================== */
+
+.hr-wrap h1 {
+        font-size: 23px;
+        font-weight: 600;
+        margin-bottom: 20px;
+}
+
+/* ── Filters / Dropdowns ─────────────────────────────────────────────── */
+.hr-filters {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        background: #fff;
+        padding: 20px 24px;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.hr-filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+        min-width: 180px;
+}
+
+.hr-filter-group label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1d2327;
+}
+
+.hr-filter-group select {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid #8c8f94;
+        border-radius: 4px;
+        font-size: 14px;
+        background: #fff;
+        min-height: 36px;
+}
+
+.hr-filter-btn { flex: 0; min-width: auto; }
+
+/* WooCommerce product editor link selectors */
+#hr-package-deal-link .select2-container,
+#hr-day-tour-rate-link .select2-container,
+#hr-joiner-tour-rate-link .select2-container,
+#hr-airport-transfer-rate-link .select2-container,
+#hr-motorbike-rental-link .select2-container,
+#hr-boat-rental-link .select2-container,
+#hr-self-drive-rental-link .select2-container,
+#hr-port-transfer-link .select2-container,
+#hr-destination-tour-link .select2-container {
+        width: 100% !important;
+}
+
+#hr-package-deal-link .select2-container .select2-selection--single,
+#hr-day-tour-rate-link .select2-container .select2-selection--single,
+#hr-joiner-tour-rate-link .select2-container .select2-selection--single,
+#hr-airport-transfer-rate-link .select2-container .select2-selection--single,
+#hr-motorbike-rental-link .select2-container .select2-selection--single,
+#hr-boat-rental-link .select2-container .select2-selection--single,
+#hr-self-drive-rental-link .select2-container .select2-selection--single,
+#hr-port-transfer-link .select2-container .select2-selection--single,
+#hr-destination-tour-link .select2-container .select2-selection--single {
+        min-height: 30px;
+}
+
+#hr-package-deal-link .select2-container .select2-selection__rendered,
+#hr-day-tour-rate-link .select2-container .select2-selection__rendered,
+#hr-joiner-tour-rate-link .select2-container .select2-selection__rendered,
+#hr-airport-transfer-rate-link .select2-container .select2-selection__rendered,
+#hr-motorbike-rental-link .select2-container .select2-selection__rendered,
+#hr-boat-rental-link .select2-container .select2-selection__rendered,
+#hr-self-drive-rental-link .select2-container .select2-selection__rendered,
+#hr-port-transfer-link .select2-container .select2-selection__rendered,
+#hr-destination-tour-link .select2-container .select2-selection__rendered {
+        line-height: 28px;
+}
+
+#hr-package-deal-link .select2-container .select2-selection__arrow,
+#hr-day-tour-rate-link .select2-container .select2-selection__arrow,
+#hr-joiner-tour-rate-link .select2-container .select2-selection__arrow,
+#hr-airport-transfer-rate-link .select2-container .select2-selection__arrow,
+#hr-motorbike-rental-link .select2-container .select2-selection__arrow,
+#hr-boat-rental-link .select2-container .select2-selection__arrow,
+#hr-self-drive-rental-link .select2-container .select2-selection__arrow,
+#hr-port-transfer-link .select2-container .select2-selection__arrow,
+#hr-destination-tour-link .select2-container .select2-selection__arrow {
+        min-height: 28px;
+}
+
+/* ── Hotel Header (breadcrumb + night controls) ───────────────────────── */
+.hr-hotel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+}
+
+.hr-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #50575e;
+}
+
+.hr-breadcrumb strong { color: #1d2327; }
+.hr-arrow { color: #8c8f94; }
+
+.hr-night-controls { display: flex; gap: 4px; }
+
+.hr-ctrl-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #2271b1;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+}
+
+.hr-ctrl-btn:hover { background: #f0f6fc; border-color: #2271b1; }
+.hr-ctrl-btn--minus { color: #d63638; }
+.hr-ctrl-btn--minus:hover { background: #fcf0f1; border-color: #d63638; }
+
+/* ── Night Checkboxes ────────────────────────────────────────────────── */
+.hr-night-checks {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        background: #f6f7f7;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+}
+
+.hr-night-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+}
+
+.hr-night-label input[type="checkbox"] {
+        accent-color: #2271b1;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+}
+
+/* ── Rate Sections ───────────────────────────────────────────────────── */
+.hr-rate-section { margin-bottom: 30px; }
+
+.hr-rate-section h2 {
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        border-bottom: 2px solid #2271b1;
+        padding-bottom: 6px;
+        color: #1d2327;
+}
+
+/* ── Rate Table ──────────────────────────────────────────────────────── */
+.hr-table-wrap { overflow-x: auto; margin-bottom: 10px; }
+
+.hr-rate-table { border-collapse: collapse; table-layout: auto; }
+
+.hr-rate-table th {
+        background: #f0f0f1;
+        font-weight: 600;
+        padding: 10px 10px;
+        font-size: 13px;
+        text-align: center;
+        border: 1px solid #c3c4c7;
+        white-space: nowrap;
+}
+
+.hr-rate-table th.hr-col-meal { text-align: left; min-width: 100px; }
+
+.hr-rate-table td {
+        padding: 9px 10px;
+        font-size: 13px;
+        text-align: center;
+        border: 1px solid #dcdcde;
+        background: #fff;
+        white-space: nowrap;
+}
+
+.hr-rate-table td.hr-col-meal {
+        text-align: left;
+        font-weight: 600;
+        background: #f6f7f7;
+}
+
+.hr-rate-table tbody tr:hover td { background: #f0f6fc; }
+
+/* Pax column toggle */
+.hr-pax-hidden { display: none; }
+
+.hr-col-pax-ctrl {
+        width: 54px;
+        text-align: center;
+        border: 1px solid #c3c4c7;
+        background: #f6f7f7 !important;
+        padding: 4px !important;
+}
+
+.hr-rate-table thead .hr-col-pax-ctrl,
+.hr-tour-table thead .hr-col-pax-ctrl {
+        vertical-align: middle;
+}
+
+.hr-pax-add, .hr-pax-rem {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        background: none;
+}
+
+.hr-pax-add  { color: #2271b1; }
+.hr-pax-add:hover  { background: #e8f0fb; }
+.hr-pax-rem  { color: #d63638; }
+.hr-pax-rem:hover  { background: #fce8e8; }
+
+.hr-actions-col { width: 100px; white-space: nowrap; text-align: center; }
+.hr-no-rates { color: #8c8f94; font-style: italic; margin: 0 0 10px; }
+
+.hr-motorbike-admin-models,
+.hr-boat-admin-rates,
+.hr-self-drive-admin-vehicles,
+.hr-port-transfer-admin-routes,
+.hr-port-transfer-admin-addons,
+.hr-destination-tour-admin-destinations,
+.hr-destination-tour-admin-addons {
+        margin: 20px 0;
+}
+
+.hr-motorbike-admin-models h3,
+.hr-boat-admin-rates h3,
+.hr-self-drive-admin-vehicles h3,
+.hr-port-transfer-admin-routes h3,
+.hr-port-transfer-admin-addons h3,
+.hr-destination-tour-admin-destinations h3,
+.hr-destination-tour-admin-addons h3 {
+        margin: 0 0 10px;
+}
+
+.hr-motorbike-model-table input[type="text"],
+.hr-motorbike-model-table input[type="number"],
+.hr-boat-rate-table input[type="text"],
+.hr-boat-rate-table input[type="number"],
+.hr-self-drive-vehicle-table input[type="text"],
+.hr-self-drive-vehicle-table input[type="number"],
+.hr-port-transfer-rate-matrix-table input[type="number"],
+.hr-port-transfer-addon-table input[type="text"],
+.hr-port-transfer-addon-table input[type="number"],
+.hr-destination-tour-destination-table input[type="text"],
+.hr-destination-tour-destination-table input[type="number"],
+.hr-destination-tour-addon-table input[type="text"],
+.hr-destination-tour-addon-table input[type="number"] {
+        min-height: 32px;
+}
+
+.hr-port-transfer-location-lists {
+        gap: 20px;
+}
+
+.hr-port-transfer-rate-matrix-table th,
+.hr-port-transfer-rate-matrix-table td {
+        vertical-align: middle;
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────── */
+.hr-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 99998;
+}
+
+.hr-modal {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        z-index: 99999;
+        width: 560px;
+        max-width: 95vw;
+        max-height: 90vh;
+        overflow-y: auto;
+}
+
+.hr-modal-inner {
+        background: #fff;
+        border-radius: 6px;
+        padding: 28px 32px;
+        position: relative;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.hr-modal-inner h2 { margin: 0 0 20px; font-size: 18px; }
+
+.hr-modal-close {
+        position: absolute; top: 12px; right: 14px;
+        background: none; border: none;
+        font-size: 18px; cursor: pointer;
+        color: #50575e; line-height: 1; padding: 4px;
+}
+
+.hr-modal-close:hover { color: #1d2327; }
+
+.hr-modal-field {
+        margin-bottom: 18px;
+}
+
+.hr-modal-field label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 13px;
+}
+
+.hr-modal-field select { width: 100%; padding: 7px; }
+
+.hr-modal-pax-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px 16px;
+        margin-bottom: 20px;
+}
+
+.hr-modal-pax-cell label {
+        display: block;
+        font-size: 12px;
+        color: #50575e;
+        margin-bottom: 4px;
+}
+
+.hr-pax-input,
+.hr-tour-children-pax-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        font-size: 13px;
+}
+
+.hr-pax-input:focus,
+.hr-tour-children-pax-input:focus {
+        border-color: #2271b1;
+        outline: none;
+        box-shadow: 0 0 0 1px #2271b1;
+}
+
+.hr-tour-addons {
+        margin: 8px 0 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dcdcde;
+}
+
+.hr-tour-booking-fields {
+        margin: 8px 0 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dcdcde;
+}
+
+.hr-tour-children-rates {
+        margin: 8px 0 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dcdcde;
+}
+
+.hr-tour-booking-fields h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+}
+
+.hr-tour-children-rates h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+}
+
+.hr-tour-children-rate-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0 12px;
+}
+
+.hr-tour-booking-field-setting {
+        display: grid;
+        grid-template-columns: 130px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+}
+
+.hr-tour-booking-field-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+}
+
+.hr-tour-booking-field-label {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+}
+
+.hr-tour-addons h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+}
+
+.hr-tour-addon-group {
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        background: #f6f7f7;
+}
+
+.hr-tour-addon-group-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+}
+
+.hr-tour-addon-group-label {
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        font-weight: 600;
+}
+
+.hr-tour-addon-group-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        white-space: nowrap;
+}
+
+.hr-tour-addon-group-actions {
+        margin-top: 12px;
+}
+
+.hr-tour-addon-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 120px auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+}
+
+.hr-tour-addon-label,
+.hr-tour-addon-rate {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+}
+
+.hr-tour-addon-remove {
+        white-space: nowrap;
+}
+
+.hr-airport-transfer-routes {
+        margin: 8px 0 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dcdcde;
+}
+
+.hr-airport-transfer-routes h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+}
+
+.hr-airport-transfer-route {
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        background: #f6f7f7;
+}
+
+.hr-airport-transfer-route-fields {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+}
+
+.hr-airport-transfer-route-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex: 1;
+        min-width: 0;
+}
+
+.hr-airport-transfer-route-field label {
+        font-size: 12px;
+        color: #50575e;
+}
+
+.hr-airport-transfer-route-rate-field {
+        flex: 0 0 190px;
+}
+
+.hr-airport-transfer-route-label,
+.hr-airport-transfer-route-rate {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+}
+
+.hr-airport-transfer-route-label {
+        font-weight: 600;
+}
+
+.hr-airport-transfer-route-remove {
+        white-space: nowrap;
+}
+
+/* ── Tour Rates Box ──────────────────────────────────────────────────── */
+.hr-tour-box {
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        padding: 24px 28px;
+        box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+/* ── Tour Rate Table ─────────────────────────────────────────────────── */
+.hr-tour-table { border-collapse: collapse; }
+
+.hr-tour-table th {
+        background: #f0f0f1;
+        font-weight: 600;
+        padding: 10px;
+        font-size: 13px;
+        text-align: center;
+        border: 1px solid #c3c4c7;
+        white-space: nowrap;
+}
+
+.hr-tour-table th.hr-col-tour { text-align: left; width: 220px; }
+
+.hr-tour-table td {
+        padding: 6px;
+        border: 1px solid #dcdcde;
+        background: #fff;
+        vertical-align: middle;
+}
+
+.hr-tour-table td:first-child { width: 220px; }
+.hr-tour-row--hidden { display: none; }
+
+.hr-input-tour {
+        width: 100%; box-sizing: border-box;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        padding: 5px 8px;
+        font-size: 13px;
+}
+
+.hr-input-tour:focus { border-color: #2271b1; outline: none; box-shadow: 0 0 0 1px #2271b1; }
+
+.hr-input-pax {
+        width: 82px; box-sizing: border-box;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        padding: 5px 6px;
+        font-size: 13px;
+        text-align: right;
+}
+
+.hr-input-pax:focus { border-color: #2271b1; outline: none; box-shadow: 0 0 0 1px #2271b1; }
+
+.hr-col-actions { width: 52px; text-align: center; white-space: nowrap; }
+
+.hr-row-add, .hr-row-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        font-size: 16px; font-weight: 700;
+        line-height: 1; cursor: pointer;
+        padding: 0; background: none;
+        text-decoration: none;
+}
+
+.hr-row-add   { color: #2271b1; margin-right: 2px; }
+.hr-row-add:hover { color: #135e96; }
+.hr-row-remove { color: #d63638; }
+.hr-row-remove:hover { color: #8a1f21; }
+
+.hr-tour-save-row {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 16px;
+        border-top: 1px solid #f0f0f1;
+        margin-top: 16px;
+}
+
+/* ======================================================================
+   Register Page
+   ====================================================================== */
+
+.hr-reg-box {
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        padding: 24px 28px;
+        box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.hr-reg-box > h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 18px 0 20px;
+        color: #1d2327;
+}
+
+/* ── Checkbox-style Tabs ─────────────────────────────────────────────── */
+.hr-reg-tabs {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e0e0e0;
+        margin-bottom: 4px;
+        flex-wrap: wrap;
+}
+
+.hr-reg-tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #50575e;
+        font-size: 14px;
+        font-weight: 500;
+}
+
+.hr-reg-tab:hover { color: #1d2327; }
+
+.hr-tab-checkbox {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px; height: 18px;
+        border: 2px solid #8c8f94;
+        border-radius: 3px;
+        background: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+}
+
+.hr-reg-tab--active .hr-tab-checkbox {
+        background: #2271b1;
+        border-color: #2271b1;
+}
+
+.hr-reg-tab--active { color: #1d2327; font-weight: 600; }
+
+/* ── Register Form ───────────────────────────────────────────────────── */
+.hr-reg-form { margin-bottom: 28px; }
+
+.hr-reg-form-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+}
+
+.hr-reg-form-col {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-width: 560px;
+        margin-bottom: 12px;
+}
+
+.hr-reg-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+}
+
+.hr-reg-field--sm { min-width: 180px; max-width: 220px; }
+
+.hr-reg-field label { font-size: 13px; color: #50575e; }
+
+.hr-reg-input {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #1d2327;
+        box-sizing: border-box;
+}
+
+.hr-reg-input:focus { border-color: #2271b1; outline: none; box-shadow: 0 0 0 1px #2271b1; }
+
+.hr-reg-select {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid #c3c4c7;
+        border-radius: 4px;
+        font-size: 14px;
+        background: #fff;
+        color: #1d2327;
+}
+
+.hr-reg-select:focus { border-color: #2271b1; outline: none; }
+
+/* ── Saved Grouped List ──────────────────────────────────────────────── */
+.hr-saved-section h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 12px;
+        color: #1d2327;
+}
+
+.hr-grouped-list {
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        overflow: hidden;
+}
+
+.hr-group-header {
+        background: #f0f0f1;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1d2327;
+        border-bottom: 1px solid #dcdcde;
+}
+
+.hr-group-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 16px;
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        color: #1d2327;
+}
+
+.hr-group-item:last-child { border-bottom: none; }
+.hr-group-item:hover { background: #f9f9f9; }
+
+.hr-inline-delete { display: inline; margin: 0; }
+
+.hr-delete-x {
+        background: none;
+        border: none;
+        color: #d63638;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0 2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+}
+
+.hr-delete-x:hover { color: #8a1f21; }
+
+/* ── Accordion (top-level) ───────────────────────────────────────────── */
+.hr-accordion { display: flex; flex-direction: column; gap: 6px; }
+
+.hr-accordion-item {
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        overflow: hidden;
+}
+
+.hr-accordion-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: #f6f7f7;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1d2327;
+        text-align: left;
+}
+
+.hr-accordion-header:hover { background: #e8e8e8; }
+
+.hr-accordion-icon {
+        font-size: 14px;
+        transition: transform 0.2s;
+        display: inline-block;
+}
+
+.hr-accordion-item--open .hr-accordion-icon { transform: rotate(180deg); }
+.hr-accordion-body { display: none; }
+.hr-accordion-item--open .hr-accordion-body { display: block; }
+
+/* ── Nested Place Accordion ──────────────────────────────────────────── */
+.hr-accordion--nested {
+        margin: 6px 12px 6px;
+        gap: 4px;
+}
+
+.hr-accordion--nested .hr-accordion-item {
+        border-color: #e8e8e8;
+        border-radius: 3px;
+}
+
+.hr-accordion-header--place {
+        background: #fff;
+        padding: 10px 14px;
+        font-size: 13px;
+        border-bottom: 1px solid #f0f0f0;
+}
+
+.hr-accordion-header--place:hover { background: #f6f7f7; }
+
+/* ── Tour Item with Inline Edit ──────────────────────────────────────── */
+.hr-tour-item {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        border-bottom: 1px solid #f0f0f0;
+}
+
+.hr-tour-item:last-child { border-bottom: none; }
+
+.hr-tour-view,
+.hr-tour-edit-mode {
+        display: flex;
+        align-items: center;
+        padding: 9px 14px;
+        gap: 8px;
+}
+
+.hr-tour-view { justify-content: space-between; }
+.hr-tour-name-text { font-size: 14px; flex: 1; }
+
+.hr-tour-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+}
+
+.hr-tour-edit-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px;
+        color: #2271b1;
+        display: inline-flex;
+        align-items: center;
+}
+
+.hr-tour-edit-btn:hover { color: #135e96; }
+.hr-tour-edit-btn .dashicons { font-size: 16px; width: 16px; height: 16px; }
+
+.hr-tour-edit-mode { background: #f9f9f9; }
+
+.hr-tour-inline-input {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid #2271b1;
+        border-radius: 3px;
+        font-size: 14px;
+        outline: none;
+        box-shadow: 0 0 0 1px #2271b1;
+}
+
+.hr-tour-edit-actions { display: flex; gap: 4px; align-items: center; }
+
+.hr-tour-save-inline,
+.hr-tour-cancel-inline {
+        background: none;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 2px 4px;
+        line-height: 1;
+}
+
+.hr-tour-save-inline   { color: #00a32a; }
+.hr-tour-save-inline:hover { color: #006614; }
+.hr-tour-cancel-inline { color: #d63638; }
+.hr-tour-cancel-inline:hover { color: #8a1f21; }
+
+.hr-empty-msg { color: #8c8f94; font-style: italic; }
