@@ -25,6 +25,19 @@ Hotel Rates Manager allows travel and tour operators to maintain hotel and tour 
 * **Night filter checkboxes**: Show only the nights you need
 * **Prices in Philippine Peso (₱)**
 
+== Package Deal Hotel Rates Shortcode ==
+
+Add this shortcode to a WooCommerce product page that has a Package Deal linked:
+
+`[package_deal_hotel_rates]`
+
+Optional attributes:
+
+* `package_id="6"` selects a Package Deal directly.
+* `product_id="123"` loads the Package Deal linked to a specific product.
+* `max_pax="8"` limits the displayed pax columns (default 12, maximum 12).
+* `title="Hotel Options"` changes the table heading.
+
 == Installation ==
 
 1. Upload the `hotel-rates` folder to `/wp-content/plugins/`.

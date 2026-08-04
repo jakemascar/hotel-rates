@@ -130,3 +130,127 @@ td.hr-sc-price {
 		padding: 7px 8px;
 	}
 }
+
+/* Package Deal hotel-rate shortcode. Kept separate from the general tables. */
+.hr-package-rates {
+	margin: 1.5em 0;
+	font-family: inherit;
+}
+
+.hr-package-rates-title {
+	margin: 0 0 0.8em;
+	color: #111827;
+	font-size: 1.35em;
+	font-weight: 800;
+}
+
+.hr-package-rates-group + .hr-package-rates-group {
+	margin-top: 1.5em;
+}
+
+.hr-package-rates-place {
+	margin: 0 0 0.55em;
+	color: #1f2937;
+	font-size: 1em;
+	font-weight: 700;
+}
+
+.hr-package-rates-overflow {
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	border: 1px solid #dbe3ee;
+	border-radius: 8px;
+}
+
+.hr-package-rates-table {
+	width: 100%;
+	min-width: 760px;
+	margin: 0;
+	border: 0;
+	border-collapse: collapse;
+	font-size: 0.875em;
+}
+
+.hr-package-rates-table thead {
+	background: #063b66;
+	color: #fff;
+}
+
+.hr-package-rates-table thead th {
+	padding: 10px 12px;
+	border: 0;
+	color: #fff;
+	font-weight: 700;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.hr-package-rates-table thead th:first-child,
+.hr-package-rates-table thead th:nth-child(2) {
+	text-align: left;
+}
+
+.hr-package-rates-table tbody tr {
+	background: #fff;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.hr-package-rates-table tbody tr:last-child {
+	border-bottom: 0;
+}
+
+.hr-package-rates-table tbody tr:nth-child(even) {
+	background: #f8fafc;
+}
+
+.hr-package-rates-table tbody th,
+.hr-package-rates-table tbody td {
+	padding: 10px 12px;
+	border: 0;
+	color: #1f2937;
+	vertical-align: middle;
+}
+
+.hr-package-rates-hotel {
+	min-width: 180px;
+	font-weight: 700;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.hr-package-rates-meal {
+	min-width: 105px;
+	white-space: nowrap;
+}
+
+.hr-package-rates-price {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.hr-package-rates-price .woocommerce-Price-amount {
+	white-space: nowrap;
+}
+
+.hr-package-rates-message {
+	margin: 1em 0;
+	color: #6b7280;
+	font-style: italic;
+}
+
+@media ( max-width: 600px ) {
+	.hr-package-rates-title {
+		font-size: 1.15em;
+	}
+
+	.hr-package-rates-table {
+		font-size: 0.8em;
+	}
+
+	.hr-package-rates-table thead th,
+	.hr-package-rates-table tbody th,
+	.hr-package-rates-table tbody td {
+		padding: 8px;
+	}
+}

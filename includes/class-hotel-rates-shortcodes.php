@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *   [tour_day_rate_table city="Dumaguete" type="Day Tour"]
  *   [tour_day_rate_table city="Dumaguete" type="Joiner"]
  *
+ *   [package_deal_hotel_rates]
+ *   [package_deal_hotel_rates package_id="6" max_pax="12"]
+ *
  * Optional attribute for both: max_pax="8"  (default 8, max 12)
  */
 class Hotel_Rates_Shortcodes {
@@ -18,6 +21,7 @@ class Hotel_Rates_Shortcodes {
         public function __construct() {
                 add_shortcode( 'tour_rate_table',     array( $this, 'hotel_rate_table' ) );
                 add_shortcode( 'tour_day_rate_table', array( $this, 'tour_rate_table' ) );
+                add_shortcode( 'package_deal_hotel_rates', array( $this, 'package_deal_hotel_rates_table' ) );
                 add_action( 'wp_enqueue_scripts',     array( $this, 'enqueue_styles' ) );
         }
 
@@ -122,6 +126,177 @@ class Hotel_Rates_Shortcodes {
                         </div>
                 </div>
                 <?php
+                return ob_get_clean();
+        }
+
+        /* Package Deal Hotel Rates Table. */
+
+        /**
+         * Display the hotel rates configured for one Package Deal.
+         *
+         * By default, the package is resolved from the current WooCommerce
+         * product's _hr_package_deal_id meta value.
+         *
+         * Usage:
+         *   [package_deal_hotel_rates]
+         *   [package_deal_hotel_rates package_id="6"]
+         *   [package_deal_hotel_rates product_id="123" max_pax="8" title="Hotel options"]
+         */
+        public function package_deal_hotel_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'package_id' => 0,
+                        'product_id' => 0,
+                        'max_pax'    => Hotel_Rates_DB::MAX_PAX,
+                        'title'      => '',
+                ), $atts, 'package_deal_hotel_rates' );
+
+                $package_id = absint( $atts['package_id'] );
+                $product_id = absint( $atts['product_id'] );
+                $max_pax    = max( 1, min( Hotel_Rates_DB::MAX_PAX, (int) $atts['max_pax'] ) );
+
+                if ( ! $package_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $package_id = (int) get_post_meta( $product_id, '_hr_package_deal_id', true );
+                        }
+                }
+
+                if ( ! $package_id ) {
+                        return '<p class="hr-package-rates-message">' . esc_html__( 'No Package Deal is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $package = Hotel_Rates_DB::get_package_deal( $package_id );
+
+                if ( ! $package ) {
+                        return '<p class="hr-package-rates-message">' . esc_html__( 'The linked Package Deal could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $place_ids        = json_decode( $package->place_ids ?? '[]', true );
+                $hotel_ids_map    = json_decode( $package->hotel_ids ?? '{}', true );
+                $hotel_nights_map = json_decode( $package->hotel_nights ?? '{}', true );
+                $place_ids        = is_array( $place_ids ) ? array_values( array_unique( array_filter( array_map( 'intval', $place_ids ) ) ) ) : array();
+                $hotel_ids_map    = is_array( $hotel_ids_map ) ? $hotel_ids_map : array();
+                $hotel_nights_map = is_array( $hotel_nights_map ) ? $hotel_nights_map : array();
+                $default_nights   = max( 1, min( Hotel_Rates_DB::MAX_NIGHTS, (int) $package->number_of_days - 1 ) );
+                $groups           = array();
+
+                foreach ( $place_ids as $place_id ) {
+                        $place_key = (string) $place_id;
+                        $hotel_ids = isset( $hotel_ids_map[ $place_key ] ) && is_array( $hotel_ids_map[ $place_key ] )
+                                ? array_values( array_unique( array_filter( array_map( 'intval', $hotel_ids_map[ $place_key ] ) ) ) )
+                                : array();
+
+                        if ( empty( $hotel_ids ) ) {
+                                continue;
+                        }
+
+                        $place = Hotel_Rates_DB::get_place( $place_id );
+
+                        if ( ! $place ) {
+                                continue;
+                        }
+
+                        $nights = isset( $hotel_nights_map[ $place_key ] ) ? (int) $hotel_nights_map[ $place_key ] : $default_nights;
+                        $nights = max( 1, min( Hotel_Rates_DB::MAX_NIGHTS, $nights ) );
+                        $rows   = array();
+
+                        foreach ( $hotel_ids as $hotel_id ) {
+                                $hotel = Hotel_Rates_DB::get_hotel( $hotel_id );
+
+                                if ( ! $hotel || (int) $hotel->place_id !== $place_id ) {
+                                        continue;
+                                }
+
+                                $rate = $this->get_preferred_package_hotel_rate( Hotel_Rates_DB::get_rates( $hotel_id, $nights ) );
+
+                                if ( ! $rate ) {
+                                        continue;
+                                }
+
+                                $rows[] = array(
+                                        'hotel' => $hotel,
+                                        'rate'  => $rate,
+                                );
+                        }
+
+                        if ( ! empty( $rows ) ) {
+                                $groups[] = array(
+                                        'place'  => $place,
+                                        'nights' => $nights,
+                                        'rows'   => $rows,
+                                );
+                        }
+                }
+
+                if ( empty( $groups ) ) {
+                        return '<p class="hr-package-rates-message">' . esc_html__( 'No hotel rates are available for this Package Deal.', 'hotel-rates' ) . '</p>';
+                }
+
+                $title = '' !== trim( (string) $atts['title'] )
+                        ? wp_kses_post( $atts['title'] )
+                        : sprintf( esc_html__( '%s Hotel Rates', 'hotel-rates' ), esc_html( $package->package_name ) );
+
+                ob_start();
+                ?>
+                <div class="hr-package-rates" data-package-deal-id="<?php echo esc_attr( $package_id ); ?>">
+                        <?php if ( $title ) : ?>
+                                <h3 class="hr-package-rates-title"><?php echo $title; ?></h3>
+                        <?php endif; ?>
+
+                        <?php foreach ( $groups as $group ) : ?>
+                                <section class="hr-package-rates-group">
+                                        <h4 class="hr-package-rates-place">
+                                                <?php
+                                                printf(
+                                                        esc_html__( '%1$s Hotels — %2$d %3$s', 'hotel-rates' ),
+                                                        esc_html( $group['place']->name ),
+                                                        (int) $group['nights'],
+                                                        1 === (int) $group['nights'] ? esc_html__( 'Night', 'hotel-rates' ) : esc_html__( 'Nights', 'hotel-rates' )
+                                                );
+                                                ?>
+                                        </h4>
+                                        <div class="hr-package-rates-overflow">
+                                                <table class="hr-package-rates-table">
+                                                        <thead>
+                                                                <tr>
+                                                                        <th scope="col"><?php esc_html_e( 'Hotel', 'hotel-rates' ); ?></th>
+                                                                        <th scope="col"><?php esc_html_e( 'Meal Plan', 'hotel-rates' ); ?></th>
+                                                                        <?php for ( $pax = 1; $pax <= $max_pax; $pax++ ) : ?>
+                                                                                <th scope="col"><?php echo esc_html( sprintf( __( '%d pax', 'hotel-rates' ), $pax ) ); ?></th>
+                                                                        <?php endfor; ?>
+                                                                </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                                <?php foreach ( $group['rows'] as $row ) : ?>
+                                                                        <tr>
+                                                                                <th scope="row" class="hr-package-rates-hotel"><?php echo esc_html( $row['hotel']->name ); ?></th>
+                                                                                <td class="hr-package-rates-meal"><?php echo esc_html( $this->get_package_meal_plan_label( $row['rate']->meal_plan ?? '' ) ); ?></td>
+                                                                                <?php for ( $pax = 1; $pax <= $max_pax; $pax++ ) : ?>
+                                                                                        <?php
+                                                                                        $column = 'pax_' . $pax;
+                                                                                        $value  = isset( $row['rate']->$column ) && '' !== $row['rate']->$column ? $row['rate']->$column : null;
+                                                                                        ?>
+                                                                                        <td class="hr-package-rates-price">
+                                                                                                <?php echo null === $value ? '&mdash;' : wp_kses_post( $this->format_package_rate_price( $value ) ); ?>
+                                                                                        </td>
+                                                                                <?php endfor; ?>
+                                                                        </tr>
+                                                                <?php endforeach; ?>
+                                                        </tbody>
+                                                </table>
+                                        </div>
+                                </section>
+                        <?php endforeach; ?>
+                </div>
+                <?php
+
                 return ob_get_clean();
         }
 
@@ -264,6 +439,56 @@ class Hotel_Rates_Shortcodes {
                 }
 
                 return $label;
+        }
+
+        /**
+         * Match the rate-selection rule used by the Package Deal booking form:
+         * prefer the no-meal/"X" row, otherwise use the first saved rate row.
+         */
+        private function get_preferred_package_hotel_rate( $rates ) {
+                if ( empty( $rates ) || ! is_array( $rates ) ) {
+                        return null;
+                }
+
+                $fallback = null;
+
+                foreach ( $rates as $rate ) {
+                        if ( ! is_object( $rate ) ) {
+                                continue;
+                        }
+
+                        if ( null === $fallback ) {
+                                $fallback = $rate;
+                        }
+
+                        $meal_plan = isset( $rate->meal_plan ) ? strtoupper( trim( (string) $rate->meal_plan ) ) : '';
+
+                        if ( '' === $meal_plan || 'X' === $meal_plan ) {
+                                return $rate;
+                        }
+                }
+
+                return $fallback;
+        }
+
+        private function get_package_meal_plan_label( $meal_plan ) {
+                $meal_plan = trim( (string) $meal_plan );
+
+                if ( '' === $meal_plan || 'X' === strtoupper( $meal_plan ) ) {
+                        return __( 'No breakfast', 'hotel-rates' );
+                }
+
+                return $meal_plan;
+        }
+
+        private function format_package_rate_price( $value ) {
+                $value = (float) $value;
+
+                if ( function_exists( 'wc_price' ) ) {
+                        return wc_price( $value );
+                }
+
+                return '&#8369;' . number_format_i18n( $value, 2 );
         }
 
         /**
