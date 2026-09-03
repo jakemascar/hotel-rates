@@ -398,6 +398,12 @@
         border-top: 1px solid #dcdcde;
 }
 
+.hr-tour-package-details {
+        margin: 8px 0 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dcdcde;
+}
+
 .hr-tour-booking-fields h3 {
         margin: 0 0 8px;
         font-size: 15px;
@@ -406,6 +412,57 @@
 .hr-tour-children-rates h3 {
         margin: 0 0 8px;
         font-size: 15px;
+}
+
+.hr-tour-package-details h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+}
+
+.hr-tour-package-detail-group {
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        background: #f6f7f7;
+}
+
+.hr-tour-package-detail-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+}
+
+.hr-tour-package-detail-header {
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        font-weight: 600;
+}
+
+.hr-tour-package-detail-group > label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+}
+
+.hr-tour-package-detail-items {
+        display: block;
+        width: 100%;
+        min-height: 105px;
+        box-sizing: border-box;
+        padding: 8px;
+        border: 1px solid #c3c4c7;
+        border-radius: 3px;
+        resize: vertical;
+}
+
+.hr-tour-package-detail-actions {
+        margin: 12px 0 0;
 }
 
 .hr-tour-children-rate-toggle {

@@ -644,6 +644,11 @@
                 return String(type || '') === 'Airport Transfer';
         }
 
+        function isDayOrJoinerTourType(type) {
+                type = String(type || '');
+                return type === 'Day Tour' || type === 'Joiner';
+        }
+
         function escapeTourAddonAttr(value) {
                 return (value === null || typeof value === 'undefined' ? '' : String(value))
                         .replace(/&/g, '&amp;')
@@ -674,7 +679,7 @@
                 var airportTransfer = isAirportTransferType(type);
                 var tourType = String(type || '');
                 var dayTour = tourType === 'Day Tour';
-                var childRateTour = dayTour || tourType === 'Joiner';
+                var childRateTour = isDayOrJoinerTourType(tourType);
 
                 $('#hr-tour-name-label').text(airportTransfer ? 'Name' : 'Tour Name');
                 $('#hr-tour-name-input').attr('placeholder', airportTransfer ? 'e.g., Panglao International Airport' : 'e.g., Dumaguete City Tour');
@@ -689,6 +694,8 @@
                 $tourModal.find('.hr-tour-children-rate-help').text(dayTour ? 'Enable Children guests for this Day Tour and enter the child discount percentage.' : 'Enable Children guests for this Joiner and enter the child discount percentage.');
                 $tourModal.find('.hr-tour-booking-fields').toggle(!airportTransfer);
                 $tourModal.find('.hr-tour-addons').toggle(!airportTransfer);
+                $tourModal.find('.hr-tour-package-details').toggle(childRateTour);
+                $tourModal.find('.hr-tour-package-details :input').prop('disabled', !childRateTour);
                 $tourModal.find('.hr-airport-transfer-routes').toggle(airportTransfer);
                 refreshTourChildrenRateLabels();
         }
@@ -802,6 +809,73 @@
                 }
 
                 return $.isArray(raw) ? raw : [];
+        }
+
+        function parseTourPackageDetails(raw) {
+                if ( !raw ) {
+                        return [];
+                }
+
+                if ( typeof raw === 'object' ) {
+                        return $.isArray(raw) ? raw : [];
+                }
+
+                try {
+                        raw = JSON.parse(raw);
+                } catch (error) {
+                        return [];
+                }
+
+                return $.isArray(raw) ? raw : [];
+        }
+
+        function getTourPackageDetailGroupsWrap() {
+                return $tourModal.find('.hr-tour-package-detail-groups').first();
+        }
+
+        function reindexTourPackageDetailGroups() {
+                getTourPackageDetailGroupsWrap().find('.hr-tour-package-detail-group').each(function (index) {
+                        var $group = $(this);
+
+                        $group.attr('data-index', index).data('index', index);
+                        $group.find('[data-field="header"]').attr('name', 'tour_package_details[' + index + '][header]');
+                        $group.find('[data-field="items"]').attr('name', 'tour_package_details[' + index + '][items]');
+                });
+        }
+
+        function addTourPackageDetailGroup(group, shouldFocus) {
+                var $groups = getTourPackageDetailGroupsWrap();
+                var index = $groups.find('.hr-tour-package-detail-group').length;
+                var header = group && group.header ? group.header : '';
+                var items = group && $.isArray(group.items) ? group.items : [];
+                var html = '';
+                var $group;
+
+                html += '<div class="hr-tour-package-detail-group" data-index="' + index + '">';
+                html += '<div class="hr-tour-package-detail-head">';
+                html += '<input type="text" data-field="header" name="tour_package_details[' + index + '][header]" class="hr-tour-package-detail-header" value="' + escapeTourAddonAttr(header) + '" placeholder="e.g., Inclusions">';
+                html += '<button type="button" class="button-link-delete hr-tour-package-detail-remove">Remove Section</button>';
+                html += '</div>';
+                html += '<label>Sub-content items</label>';
+                html += '<textarea data-field="items" name="tour_package_details[' + index + '][items]" class="hr-tour-package-detail-items" rows="5" placeholder="Enter one item per line">' + escapeTourAddonAttr(items.join('\n')) + '</textarea>';
+                html += '</div>';
+
+                $groups.append(html);
+                $group = $groups.find('.hr-tour-package-detail-group').last();
+                reindexTourPackageDetailGroups();
+
+                if ( shouldFocus ) {
+                        $group.find('.hr-tour-package-detail-header').focus();
+                }
+        }
+
+        function resetTourPackageDetails(raw) {
+                var details = parseTourPackageDetails(raw);
+
+                getTourPackageDetailGroupsWrap().empty();
+                $.each(details, function (index, group) {
+                        addTourPackageDetailGroup(group, false);
+                });
         }
 
         function getDefaultTourBookingFields() {
@@ -1008,6 +1082,15 @@
                 reindexTourAddonGroups();
         });
 
+        $tourModal.on('click', '.hr-tour-package-detail-add', function () {
+                addTourPackageDetailGroup({}, true);
+        });
+
+        $tourModal.on('click', '.hr-tour-package-detail-remove', function () {
+                $(this).closest('.hr-tour-package-detail-group').remove();
+                reindexTourPackageDetailGroups();
+        });
+
         $tourModal.on('click', '.hr-airport-transfer-route-add', function () {
                 addAirportTransferRoute({}, true);
         });
@@ -1039,6 +1122,10 @@
                 resetTourBookingFields({});
                 resetTourChildrenRates({});
                 resetTourAddonFields([]);
+                resetTourPackageDetails([]);
+                if ( isDayOrJoinerTourType(type) ) {
+                        addTourPackageDetailGroup({}, false);
+                }
                 resetAirportTransferRoutes([]);
                 if ( isAirportTransferType(type) ) {
                         addAirportTransferRoute({}, false);
@@ -1060,6 +1147,10 @@
                 resetTourBookingFields($btn.attr('data-booking-fields'));
                 resetTourChildrenRates($btn.attr('data-children-rates'));
                 resetTourAddonFields($btn.attr('data-addons'));
+                resetTourPackageDetails($btn.attr('data-package-details'));
+                if ( isDayOrJoinerTourType(type) && !getTourPackageDetailGroupsWrap().find('.hr-tour-package-detail-group').length ) {
+                        addTourPackageDetailGroup({}, false);
+                }
                 resetAirportTransferRoutes($btn.attr('data-transfer-routes'));
                 if ( isAirportTransferType(type) && !getAirportTransferRouteList().find('.hr-airport-transfer-route').length ) {
                         addAirportTransferRoute({}, false);

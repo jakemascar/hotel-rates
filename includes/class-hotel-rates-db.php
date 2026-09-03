@@ -73,6 +73,7 @@ class Hotel_Rates_DB {
                         transfer_routes LONGTEXT    NULL,
                         booking_fields LONGTEXT     NULL,
                         children_rates LONGTEXT     NULL,
+                        package_details LONGTEXT    NULL,
                         {$pax_cols}
                         created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -372,6 +373,9 @@ class Hotel_Rates_DB {
                 }
                 if ( ! in_array( 'children_rates', $cols, true ) ) {
                         $wpdb->query( "ALTER TABLE {$wpdb->prefix}hr_tour_rates ADD COLUMN children_rates LONGTEXT NULL AFTER booking_fields" );
+                }
+                if ( ! in_array( 'package_details', $cols, true ) ) {
+                        $wpdb->query( "ALTER TABLE {$wpdb->prefix}hr_tour_rates ADD COLUMN package_details LONGTEXT NULL AFTER children_rates" );
                 }
                 // Add pax 9–12 to hr_rates.
                 $rate_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}hr_rates" );
@@ -849,6 +853,62 @@ class Hotel_Rates_DB {
                 return $rates;
         }
 
+        /**
+         * Normalize the repeatable information groups displayed by the
+         * specific Day Tour / Joiner rate shortcode.
+         */
+        public static function normalize_tour_package_details( $raw_details ) {
+                if ( is_string( $raw_details ) ) {
+                        $decoded = json_decode( $raw_details, true );
+                        $raw_details = is_array( $decoded ) ? $decoded : array();
+                }
+
+                if ( ! is_array( $raw_details ) ) {
+                        return array();
+                }
+
+                if ( isset( $raw_details['groups'] ) && is_array( $raw_details['groups'] ) ) {
+                        $raw_details = $raw_details['groups'];
+                }
+
+                $details = array();
+
+                foreach ( $raw_details as $group ) {
+                        if ( ! is_array( $group ) ) {
+                                continue;
+                        }
+
+                        $header = sanitize_text_field( $group['header'] ?? '' );
+                        $items  = $group['items'] ?? ( $group['items_text'] ?? array() );
+
+                        if ( is_string( $items ) ) {
+                                $items = preg_split( '/\r\n|\r|\n/', $items );
+                        }
+
+                        $items = is_array( $items ) ? $items : array();
+                        $normalized_items = array();
+
+                        foreach ( $items as $item ) {
+                                $item = sanitize_text_field( $item );
+
+                                if ( '' !== $item ) {
+                                        $normalized_items[] = $item;
+                                }
+                        }
+
+                        if ( '' === $header || empty( $normalized_items ) ) {
+                                continue;
+                        }
+
+                        $details[] = array(
+                                'header' => $header,
+                                'items'  => $normalized_items,
+                        );
+                }
+
+                return $details;
+        }
+
         private static function is_tour_addon_group_list( $raw_addons ) {
                 foreach ( $raw_addons as $group ) {
                         return is_array( $group ) && ( array_key_exists( 'label', $group ) || array_key_exists( 'options', $group ) );
@@ -962,6 +1022,11 @@ class Hotel_Rates_DB {
                         'transfer_routes' => wp_json_encode( self::normalize_airport_transfer_routes( $transfer_routes ) ),
                         'booking_fields' => wp_json_encode( self::normalize_tour_booking_fields( $data['tour_booking_fields'] ?? array() ) ),
                         'children_rates' => wp_json_encode( self::normalize_tour_children_rates( $data['tour_children_rates'] ?? array() ) ),
+                        'package_details' => wp_json_encode(
+                                in_array( $type, array( 'Day Tour', 'Joiner' ), true )
+                                        ? self::normalize_tour_package_details( $data['tour_package_details'] ?? array() )
+                                        : array()
+                        ),
                 );
                 for ( $p = 1; $p <= self::MAX_PAX; $p++ ) {
                         $row[ "pax_{$p}" ] = self::maybe_null( $data[ "pax_{$p}" ] ?? null );

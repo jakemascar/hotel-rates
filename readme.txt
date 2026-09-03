@@ -38,6 +38,21 @@ Optional attributes:
 * `max_pax="8"` limits the displayed pax columns (default 12, maximum 12).
 * `title="Hotel Options"` changes the table heading.
 
+== Specific Day Tour / Joiner Rate Shortcode ==
+
+Add this shortcode to a WooCommerce product page with a linked Day Tour or Joiner Tour:
+
+`[specific_tour_rates]`
+
+Optional attributes:
+
+* `tour_rate_id="123"` selects one Day Tour or Joiner rate directly.
+* `product_id="456"` loads the Day Tour or Joiner linked to a specific product.
+* `max_pax="8"` limits the displayed pax columns (default 12, maximum 12).
+* `title="Tour Rates"` changes the table heading.
+
+Day Tour and Joiner rate records also support repeatable Details of the Package sections. Each section has a header and one or more list items, and is displayed in the third column of the specific tour-rate table.
+
 == Installation ==
 
 1. Upload the `hotel-rates` folder to `/wp-content/plugins/`.

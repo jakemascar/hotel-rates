@@ -183,6 +183,7 @@ foreach ( Hotel_Rates_DB::get_places() as $lookup_place ) {
 						<?php $tour_addons = Hotel_Rates_DB::normalize_tour_optional_addons( $tr->optional_addons ?? '', $tr->type ); ?>
 						<?php $tour_booking_fields = Hotel_Rates_DB::normalize_tour_booking_fields( $tr->booking_fields ?? '' ); ?>
 						<?php $tour_children_rates = Hotel_Rates_DB::normalize_tour_children_rates( $tr->children_rates ?? '' ); ?>
+						<?php $tour_package_details = Hotel_Rates_DB::normalize_tour_package_details( $tr->package_details ?? '' ); ?>
 						<tr>
 							<td class="hr-col-meal"><strong><?php echo esc_html( $tr->tour_name ); ?></strong></td>
 							<?php for ( $p = 1; $p <= $max_pax; $p++ ) : $col = 'pax_' . $p; ?>
@@ -199,6 +200,7 @@ foreach ( Hotel_Rates_DB::get_places() as $lookup_place ) {
 									data-addons="<?php echo esc_attr( wp_json_encode( $tour_addons ) ); ?>"
 									data-booking-fields="<?php echo esc_attr( wp_json_encode( $tour_booking_fields ) ); ?>"
 									data-children-rates="<?php echo esc_attr( wp_json_encode( $tour_children_rates ) ); ?>"
+									data-package-details="<?php echo esc_attr( wp_json_encode( $tour_package_details ) ); ?>"
 									<?php for ( $p = 1; $p <= $max_pax; $p++ ) : $col = 'pax_' . $p; ?>
 									data-pax-<?php echo $p; ?>="<?php echo esc_attr( $tr->$col ?? '' ); ?>"
 									<?php endfor; ?>
@@ -314,6 +316,17 @@ foreach ( Hotel_Rates_DB::get_places() as $lookup_place ) {
 						</div>
 						<?php endfor; ?>
 					</div>
+				</div>
+
+				<div class="hr-tour-package-details">
+					<h3><?php esc_html_e( 'Details of the Package', 'hotel-rates' ); ?></h3>
+					<p class="description"><?php esc_html_e( 'Add one or more information sections for the tour-rate table. Enter one sub-content item per line.', 'hotel-rates' ); ?></p>
+					<div class="hr-tour-package-detail-groups"></div>
+					<p class="hr-tour-package-detail-actions">
+						<button type="button" class="button hr-tour-package-detail-add">
+							<?php esc_html_e( 'Add Details Section', 'hotel-rates' ); ?>
+						</button>
+					</p>
 				</div>
 
 				<div class="hr-airport-transfer-routes" style="display:none;">

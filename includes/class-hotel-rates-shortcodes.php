@@ -14,6 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  *   [package_deal_hotel_rates]
  *   [package_deal_hotel_rates package_id="6" max_pax="12"]
  *
+ *   [specific_tour_rates]
+ *   [specific_tour_rates tour_rate_id="123" max_pax="12"]
+ *
  * Optional attribute for both: max_pax="8"  (default 8, max 12)
  */
 class Hotel_Rates_Shortcodes {
@@ -22,7 +25,32 @@ class Hotel_Rates_Shortcodes {
                 add_shortcode( 'tour_rate_table',     array( $this, 'hotel_rate_table' ) );
                 add_shortcode( 'tour_day_rate_table', array( $this, 'tour_rate_table' ) );
                 add_shortcode( 'package_deal_hotel_rates', array( $this, 'package_deal_hotel_rates_table' ) );
+                add_shortcode( 'specific_tour_rates', array( $this, 'specific_tour_rates_table' ) );
+                add_filter( 'the_content', array( $this, 'render_specific_tour_rates_in_content' ), 99 );
                 add_action( 'wp_enqueue_scripts',     array( $this, 'enqueue_styles' ) );
+        }
+
+        /**
+         * Expand only [specific_tour_rates] when content is added after the
+         * normal shortcode pass, as happens in some product accordion renderers.
+         *
+         * @param string $content Filtered post content.
+         * @return string
+         */
+        public function render_specific_tour_rates_in_content( $content ) {
+                if ( false === strpos( $content, '[specific_tour_rates' ) ) {
+                        return $content;
+                }
+
+                $pattern = get_shortcode_regex( array( 'specific_tour_rates' ) );
+
+                return preg_replace_callback(
+                        '/' . $pattern . '/s',
+                        static function ( $matches ) {
+                                return do_shortcode_tag( $matches );
+                        },
+                        $content
+                );
         }
 
         public function enqueue_styles() {
@@ -373,6 +401,167 @@ class Hotel_Rates_Shortcodes {
         }
 
         /* ── Helpers ──────────────────────────────────────────────────────── */
+
+        /**
+         * Display one linked Day Tour or Joiner rate row.
+         *
+         * Usage:
+         *   [specific_tour_rates]
+         *   [specific_tour_rates tour_rate_id="123"]
+         *   [specific_tour_rates product_id="456" max_pax="8" title="Tour Rates"]
+         */
+        public function specific_tour_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'tour_rate_id' => 0,
+                        'product_id'   => 0,
+                        'max_pax'      => Hotel_Rates_DB::MAX_PAX,
+                        'title'        => '',
+                ), $atts, 'specific_tour_rates' );
+
+                $tour_rate_id = absint( $atts['tour_rate_id'] );
+                $product_id   = absint( $atts['product_id'] );
+                $max_pax      = max( 1, min( Hotel_Rates_DB::MAX_PAX, (int) $atts['max_pax'] ) );
+
+                if ( ! $tour_rate_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $tour_rate_id = $this->get_linked_day_or_joiner_tour_rate_id( $product_id );
+                        }
+                }
+
+                if ( ! $tour_rate_id ) {
+                        return '<p class="hr-sc-empty">' . esc_html__( 'No Day Tour or Joiner Tour is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $tour_rate = Hotel_Rates_DB::get_tour_rate_by_id( $tour_rate_id );
+
+                if ( ! $tour_rate || ! in_array( (string) $tour_rate->type, array( 'Day Tour', 'Joiner' ), true ) ) {
+                        return '<p class="hr-sc-error">' . esc_html__( 'The selected tour rate must be a Day Tour or Joiner Tour.', 'hotel-rates' ) . '</p>';
+                }
+
+                $package_details = Hotel_Rates_DB::normalize_tour_package_details( $tour_rate->package_details ?? '' );
+                $children_rates  = Hotel_Rates_DB::normalize_tour_children_rates( $tour_rate->children_rates ?? '' );
+                $child_discount  = isset( $children_rates['discount_percent'] ) ? (float) $children_rates['discount_percent'] : 0.0;
+                $child_discount_label = floor( $child_discount ) === $child_discount
+                        ? number_format_i18n( $child_discount, 0 )
+                        : rtrim( rtrim( number_format_i18n( $child_discount, 2 ), '0' ), '.,' );
+                $child_discount_text = sprintf(
+                        __( 'Each child uses the adult rate for the total adults plus children count, then %s%% is applied.', 'hotel-rates' ),
+                        $child_discount_label
+                );
+
+                $title = '' !== trim( (string) $atts['title'] )
+                        ? wp_kses_post( $atts['title'] )
+                        : esc_html( $tour_rate->tour_name );
+
+                ob_start();
+                ?>
+                <div
+                        class="hr-sc-wrap hr-specific-tour-rates"
+                        data-tour-rate-id="<?php echo esc_attr( $tour_rate_id ); ?>"
+                        data-tour-type="<?php echo esc_attr( $tour_rate->type ); ?>"
+                >
+                        <div class="hr-sc-table-overflow">
+                                <table class="hr-sc-table hr-specific-tour-rate-table">
+                                        <thead>
+                                                <tr class="hr-specific-tour-name-row">
+                                                        <th colspan="3" scope="colgroup"><?php echo $title; ?></th>
+                                                </tr>
+                                                <tr>
+                                                        <th scope="col"><?php esc_html_e( 'No. of Pax', 'hotel-rates' ); ?></th>
+                                                        <th scope="col"><?php esc_html_e( 'Rate per Person', 'hotel-rates' ); ?></th>
+                                                        <th scope="col"><?php esc_html_e( 'Details of the Package', 'hotel-rates' ); ?></th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php for ( $pax = 1; $pax <= $max_pax; $pax++ ) : ?>
+                                                                <?php
+                                                                $column = 'pax_' . $pax;
+                                                                $value  = isset( $tour_rate->$column ) && '' !== $tour_rate->$column ? $tour_rate->$column : null;
+                                                                ?>
+                                                        <tr>
+                                                                <td class="hr-specific-tour-rate-pax"><?php echo esc_html( $pax ); ?></td>
+                                                                <td class="hr-specific-tour-rate-price"><?php echo null === $value ? '&mdash;' : '&#8369; ' . esc_html( number_format_i18n( (float) $value, 0 ) ); ?></td>
+                                                                <?php if ( 1 === $pax ) : ?>
+                                                                        <td class="hr-specific-tour-package-details" rowspan="<?php echo esc_attr( $max_pax ); ?>">
+                                                                                <?php if ( ! empty( $package_details ) ) : ?>
+                                                                                        <?php foreach ( $package_details as $detail_group ) : ?>
+                                                                                                <section class="hr-specific-tour-package-detail-group">
+                                                                                                        <h4><?php echo esc_html( $detail_group['header'] ); ?></h4>
+                                                                                                        <ul>
+                                                                                                                <?php foreach ( $detail_group['items'] as $detail_item ) : ?>
+                                                                                                                        <li><?php echo esc_html( $detail_item ); ?></li>
+                                                                                                                <?php endforeach; ?>
+                                                                                                        </ul>
+                                                                                                </section>
+                                                                                        <?php endforeach; ?>
+                                                                                <?php else : ?>
+                                                                                        &mdash;
+                                                                                <?php endif; ?>
+                                                                        </td>
+                                                                <?php endif; ?>
+                                                        </tr>
+                                                <?php endfor; ?>
+						<?php if ( ! empty( $children_rates['enabled'] ) ) : ?>
+							<tr class="hr-specific-tour-child-discount-row hr-specific-tour-desktop-child-discount">
+								<td colspan="3">
+									<?php echo esc_html( $child_discount_text ); ?>
+								</td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( ! empty( $children_rates['enabled'] ) ) : ?>
+							<tr class="hr-specific-tour-child-discount-row hr-specific-tour-mobile-child-discount">
+								<td colspan="3">
+									<strong><?php esc_html_e( 'Child Rate Information', 'hotel-rates' ); ?></strong>
+									<p><?php echo esc_html( $child_discount_text ); ?></p>
+								</td>
+							</tr>
+						<?php endif; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+                <?php
+
+                return ob_get_clean();
+        }
+
+        /**
+         * Resolve only Day Tour and Joiner product links. Day Tour follows the
+         * same priority used by the booking form when both links are present.
+         */
+        private function get_linked_day_or_joiner_tour_rate_id( $product_id ) {
+                $day_tour_rate_id = (int) get_post_meta( $product_id, '_hr_day_tour_rate_id', true );
+
+                if ( $day_tour_rate_id ) {
+                        return $day_tour_rate_id;
+                }
+
+                $joiner_tour_rate_id = (int) get_post_meta( $product_id, '_hr_joiner_tour_rate_id', true );
+
+                if ( $joiner_tour_rate_id ) {
+                        return $joiner_tour_rate_id;
+                }
+
+                $legacy_tour_rate_id = (int) get_post_meta( $product_id, '_hr_tour_rate_id', true );
+
+                if ( ! $legacy_tour_rate_id ) {
+                        return 0;
+                }
+
+                $legacy_tour_rate = Hotel_Rates_DB::get_tour_rate_by_id( $legacy_tour_rate_id );
+
+                return $legacy_tour_rate && in_array( (string) $legacy_tour_rate->type, array( 'Day Tour', 'Joiner' ), true )
+                        ? $legacy_tour_rate_id
+                        : 0;
+        }
 
         /**
          * Find a place row by name.

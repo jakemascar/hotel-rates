@@ -9,6 +9,203 @@ table.hr-sc-table th {
 	font-family: inherit;
 }
 
+/* Keep a specific Day Tour/Joiner table separated from surrounding content. */
+.hr-sc-wrap.hr-specific-tour-rates {
+	display: block;
+	clear: both;
+	margin-top: 3rem;
+	margin-bottom: 3rem;
+	padding-top: 0.75rem;
+	padding-bottom: 0.75rem;
+}
+
+.hr-specific-tour-rates .hr-sc-table-overflow {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.hr-specific-tour-rates table.hr-specific-tour-rate-table {
+	min-width: 720px;
+	table-layout: fixed;
+}
+
+.hr-specific-tour-rate-table thead tr.hr-specific-tour-name-row {
+	background: #1a2e4a;
+}
+
+.hr-specific-tour-rate-table thead tr.hr-specific-tour-name-row th {
+	padding: 12px 14px;
+	color: #fff;
+	font-size: 1.05em;
+	text-align: left;
+}
+
+.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) {
+	background: #f3f6fa;
+}
+
+.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th {
+	color: #1f2937;
+	text-align: left;
+}
+
+.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(1) {
+	width: 15%;
+}
+
+.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(2) {
+	width: 23%;
+}
+
+.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(3) {
+	width: 62%;
+}
+
+.hr-specific-tour-rate-table td.hr-specific-tour-rate-pax,
+.hr-specific-tour-rate-table td.hr-specific-tour-rate-price {
+	text-align: left;
+	white-space: nowrap;
+}
+
+.hr-specific-tour-rate-table td.hr-specific-tour-package-details {
+	padding: 0 16px 14px;
+	vertical-align: top;
+}
+
+.hr-specific-tour-package-detail-group + .hr-specific-tour-package-detail-group {
+	margin-top: 0;
+}
+
+.hr-specific-tour-package-detail-group h4 {
+	margin: 0 0 0.55em;
+	color: #1f2937;
+	font-size: 0.92em !important;
+	line-height: 1.35;
+	font-weight: 700;
+}
+
+.hr-specific-tour-rate-table tbody tr:first-child > td:nth-child(-n+2) {
+	background-color: #fff !important;
+}
+
+.hr-specific-tour-package-detail-group ul {
+	margin: 0;
+	padding-left: 1.4em;
+}
+
+.hr-specific-tour-package-detail-group li {
+	margin: 0 0 0.45em;
+	line-height: 1.45;
+}
+
+.hr-specific-tour-package-detail-group li:last-child {
+	margin-bottom: 0;
+}
+
+.hr-specific-tour-rate-table .hr-specific-tour-child-discount-row td {
+	padding: 12px 14px;
+	background: #f8fafc;
+	border-top: 1px solid #dbe3ee;
+	color: #1f2937;
+	font-size: 0.92em;
+	font-weight: 600;
+	line-height: 1.45;
+	text-align: left;
+}
+
+.hr-specific-tour-mobile-child-discount {
+	display: none;
+}
+
+@media ( max-width: 767px ) {
+	.hr-specific-tour-rates .hr-sc-table-overflow {
+		overflow-x: visible;
+	}
+
+	.hr-specific-tour-rates table.hr-specific-tour-rate-table {
+		width: 100%;
+		min-width: 0;
+		table-layout: fixed;
+		font-size: clamp(0.72rem, 2.8vw, 0.82rem);
+	}
+
+	.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(1) {
+		width: 18%;
+	}
+
+	.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(2) {
+		width: 27%;
+	}
+
+	.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th:nth-child(3) {
+		width: 55%;
+	}
+
+	.hr-specific-tour-rate-table thead tr:not(.hr-specific-tour-name-row) th {
+		padding: 8px 6px;
+		white-space: normal;
+		line-height: 1.3;
+		overflow-wrap: anywhere;
+	}
+
+	.hr-specific-tour-rate-table td.hr-specific-tour-rate-pax,
+	.hr-specific-tour-rate-table td.hr-specific-tour-rate-price {
+		padding: 8px 6px;
+	}
+
+	.hr-specific-tour-rate-table td.hr-specific-tour-package-details {
+		display: table-cell;
+		padding: 8px 8px 10px;
+		vertical-align: top;
+		background: #fff;
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-desktop-child-discount {
+		display: none;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-mobile-child-discount {
+		display: table-row;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-package-detail-group h4 {
+		font-size: 0.92em !important;
+		line-height: 1.3;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-package-detail-group ul {
+		padding-left: 1.15em;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-package-detail-group li {
+		margin-bottom: 0.35em;
+		line-height: 1.35;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-mobile-child-discount td {
+		padding: 12px 10px;
+		border: 1px solid #dbe3ee;
+		background: #fff;
+		color: #1f2937;
+		font-size: 0.875em;
+		line-height: 1.45;
+		white-space: normal;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-mobile-child-discount strong {
+		display: block;
+		margin-bottom: 0.45em;
+		font-size: 0.92em;
+		font-weight: 700;
+	}
+
+	.hr-specific-tour-rate-table .hr-specific-tour-mobile-child-discount p {
+		margin: 0;
+	}
+}
+
 .hr-sc-title {
 	font-size: 1.15em;
 	font-weight: 800;
@@ -119,6 +316,13 @@ td.hr-sc-price {
 
 /* Responsive */
 @media ( max-width: 600px ) {
+	.hr-sc-wrap.hr-specific-tour-rates {
+		margin-top: 2rem;
+		margin-bottom: 2rem;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+
 	.hr-sc-title {
 		font-size: 1em;
 	}
