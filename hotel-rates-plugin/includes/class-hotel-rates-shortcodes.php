@@ -26,23 +26,42 @@ class Hotel_Rates_Shortcodes {
                 add_shortcode( 'tour_day_rate_table', array( $this, 'tour_rate_table' ) );
                 add_shortcode( 'package_deal_hotel_rates', array( $this, 'package_deal_hotel_rates_table' ) );
                 add_shortcode( 'specific_tour_rates', array( $this, 'specific_tour_rates_table' ) );
-                add_filter( 'the_content', array( $this, 'render_specific_tour_rates_in_content' ), 99 );
+                add_filter( 'tripgo_get_meta_data', array( $this, 'render_specific_tour_rates_in_tripgo_plan' ), 10, 4 );
                 add_action( 'wp_enqueue_scripts',     array( $this, 'enqueue_styles' ) );
         }
 
         /**
-         * Expand only [specific_tour_rates] when content is added after the
-         * normal shortcode pass, as happens in some product accordion renderers.
+         * Expand supported Hotel Rates shortcodes only in Tripgo Tour Plan descriptions.
          *
-         * @param string $content Filtered post content.
+         * @param mixed  $value   Resolved Tripgo metadata value.
+         * @param string $key     Metadata key requested by the template.
+         * @param array  $args    Source metadata array.
+         * @param mixed  $default Default metadata value.
+         * @return mixed
+         */
+        public function render_specific_tour_rates_in_tripgo_plan( $value, $key, $args, $default ) {
+                if ( 'ovabrw_tour_plan_desc' !== $key || ! is_string( $value ) ) {
+                        return $value;
+                }
+
+                return $this->render_specific_tour_rates_in_content( $value );
+        }
+
+        /**
+         * Expand only supported Hotel Rates shortcodes in a supplied string.
+         *
+         * @param string $content Tour Plan description.
          * @return string
          */
         public function render_specific_tour_rates_in_content( $content ) {
-                if ( false === strpos( $content, '[specific_tour_rates' ) ) {
+                if (
+                        false === strpos( $content, '[specific_tour_rates' ) &&
+                        false === strpos( $content, '[package_deal_hotel_rates' )
+                ) {
                         return $content;
                 }
 
-                $pattern = get_shortcode_regex( array( 'specific_tour_rates' ) );
+                $pattern = get_shortcode_regex( array( 'specific_tour_rates', 'package_deal_hotel_rates' ) );
 
                 return preg_replace_callback(
                         '/' . $pattern . '/s',
@@ -59,6 +78,15 @@ class Hotel_Rates_Shortcodes {
                         HR_PLUGIN_URL . 'public/css/shortcodes.css',
                         array(),
                         HR_VERSION
+                );
+
+                wp_add_inline_style(
+                        'hr-shortcodes',
+                        '.hr-package-rates .hr-package-rates-place{font-size:.875em!important;line-height:1.2!important}' .
+                        '.hr-package-rates .hr-package-rates-overflow table.hr-package-rates-table>thead>tr>th{height:auto!important;padding-top:10px!important;padding-bottom:10px!important;line-height:24px!important;vertical-align:middle!important}' .
+                        '.hr-package-rates .hr-package-rates-table .hr-package-rates-heading{display:flex!important;align-items:center!important;justify-content:center!important;height:auto!important;min-height:0!important;padding-top:20px!important;line-height:24px!important}' .
+                        '.hr-package-rates .hr-package-rates-table>thead>tr>th:first-child .hr-package-rates-heading,.hr-package-rates .hr-package-rates-table>thead>tr>th:nth-child(2) .hr-package-rates-heading{justify-content:flex-start!important}' .
+			'.hr-package-rates .hr-package-rates-table>thead>tr>th:first-child .hr-package-rates-heading{position:relative!important;top:6px!important}'
                 );
         }
 
@@ -168,14 +196,13 @@ class Hotel_Rates_Shortcodes {
          * Usage:
          *   [package_deal_hotel_rates]
          *   [package_deal_hotel_rates package_id="6"]
-         *   [package_deal_hotel_rates product_id="123" max_pax="8" title="Hotel options"]
+         *   [package_deal_hotel_rates product_id="123" max_pax="8"]
          */
         public function package_deal_hotel_rates_table( $atts ) {
                 $atts = shortcode_atts( array(
                         'package_id' => 0,
                         'product_id' => 0,
                         'max_pax'    => Hotel_Rates_DB::MAX_PAX,
-                        'title'      => '',
                 ), $atts, 'package_deal_hotel_rates' );
 
                 $package_id = absint( $atts['package_id'] );
@@ -267,16 +294,9 @@ class Hotel_Rates_Shortcodes {
                         return '<p class="hr-package-rates-message">' . esc_html__( 'No hotel rates are available for this Package Deal.', 'hotel-rates' ) . '</p>';
                 }
 
-                $title = '' !== trim( (string) $atts['title'] )
-                        ? wp_kses_post( $atts['title'] )
-                        : sprintf( esc_html__( '%s Hotel Rates', 'hotel-rates' ), esc_html( $package->package_name ) );
-
                 ob_start();
                 ?>
                 <div class="hr-package-rates" data-package-deal-id="<?php echo esc_attr( $package_id ); ?>">
-                        <?php if ( $title ) : ?>
-                                <h3 class="hr-package-rates-title"><?php echo $title; ?></h3>
-                        <?php endif; ?>
 
                         <?php foreach ( $groups as $group ) : ?>
                                 <section class="hr-package-rates-group">
@@ -294,10 +314,10 @@ class Hotel_Rates_Shortcodes {
                                                 <table class="hr-package-rates-table">
                                                         <thead>
                                                                 <tr>
-                                                                        <th scope="col"><?php esc_html_e( 'Hotel', 'hotel-rates' ); ?></th>
-                                                                        <th scope="col"><?php esc_html_e( 'Meal Plan', 'hotel-rates' ); ?></th>
+                                                                        <th scope="col"><span class="hr-package-rates-heading"><?php esc_html_e( 'Hotel', 'hotel-rates' ); ?></span></th>
+                                                                        <th scope="col"><span class="hr-package-rates-heading"><?php esc_html_e( 'Meal Plan', 'hotel-rates' ); ?></span></th>
                                                                         <?php for ( $pax = 1; $pax <= $max_pax; $pax++ ) : ?>
-                                                                                <th scope="col"><?php echo esc_html( sprintf( __( '%d pax', 'hotel-rates' ), $pax ) ); ?></th>
+                                                                                <th scope="col"><span class="hr-package-rates-heading"><?php echo esc_html( sprintf( __( '%d pax', 'hotel-rates' ), $pax ) ); ?></span></th>
                                                                         <?php endfor; ?>
                                                                 </tr>
                                                         </thead>
@@ -408,14 +428,13 @@ class Hotel_Rates_Shortcodes {
          * Usage:
          *   [specific_tour_rates]
          *   [specific_tour_rates tour_rate_id="123"]
-         *   [specific_tour_rates product_id="456" max_pax="8" title="Tour Rates"]
+         *   [specific_tour_rates product_id="456" max_pax="8"]
          */
         public function specific_tour_rates_table( $atts ) {
                 $atts = shortcode_atts( array(
                         'tour_rate_id' => 0,
                         'product_id'   => 0,
                         'max_pax'      => Hotel_Rates_DB::MAX_PAX,
-                        'title'        => '',
                 ), $atts, 'specific_tour_rates' );
 
                 $tour_rate_id = absint( $atts['tour_rate_id'] );
@@ -457,9 +476,6 @@ class Hotel_Rates_Shortcodes {
                         $child_discount_label
                 );
 
-                $title = '' !== trim( (string) $atts['title'] )
-                        ? wp_kses_post( $atts['title'] )
-                        : esc_html( $tour_rate->tour_name );
 
                 ob_start();
                 ?>
@@ -470,10 +486,12 @@ class Hotel_Rates_Shortcodes {
                 >
                         <div class="hr-sc-table-overflow">
                                 <table class="hr-sc-table hr-specific-tour-rate-table">
+                                        <colgroup>
+                                                <col class="hr-specific-tour-rate-col-pax">
+                                                <col class="hr-specific-tour-rate-col-price">
+                                                <col class="hr-specific-tour-rate-col-details">
+                                        </colgroup>
                                         <thead>
-                                                <tr class="hr-specific-tour-name-row">
-                                                        <th colspan="3" scope="colgroup"><?php echo $title; ?></th>
-                                                </tr>
                                                 <tr>
                                                         <th scope="col"><?php esc_html_e( 'No. of Pax', 'hotel-rates' ); ?></th>
                                                         <th scope="col"><?php esc_html_e( 'Rate per Person', 'hotel-rates' ); ?></th>
