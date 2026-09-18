@@ -30,6 +30,7 @@ class Hotel_Rates_Booking {
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_destination_tour_add_to_cart' ), 10, 3 );
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'prepare_pickup_dropoff_guestless_add_to_cart_request' ), 1, 3 );
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_pickup_dropoff_add_to_cart' ), 10, 3 );
+                add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'prepare_day_tour_add_to_cart_request' ), 1, 3 );
                 add_filter( 'ovabrw_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
                 add_filter( 'ovabrw_get_price_by_guests', array( $this, 'add_hotel_rate_to_total' ), 10, 5 );
                 add_action( 'woocommerce_cart_calculate_fees', array( $this, 'add_port_transfer_convenience_fees' ), 20, 1 );
@@ -256,11 +257,13 @@ class Hotel_Rates_Booking {
                         'breakfastLabel'    => __( 'Breakfast included', 'hotel-rates' ),
                         'packageChooseGuests' => __( 'Choose your guest count first to configure this package.', 'hotel-rates' ),
                         'packageTotalLabel'   => __( 'Package total: %s', 'hotel-rates' ),
+                        'packageDepositAmountLabel' => __( 'Pay only %s deposit', 'hotel-rates' ),
                         'packageInvalidLabel' => __( 'One or more selected package items has no rate for the chosen guest count.', 'hotel-rates' ),
                         'packageDateRangeLabel' => __( 'Package dates: %1$s to %2$s', 'hotel-rates' ),
                         'packageDateRangePlaceholder' => __( 'Select a start date to see the package date range.', 'hotel-rates' ),
                         'tourChooseGuests'    => __( 'Choose your guest count first to calculate this tour.', 'hotel-rates' ),
                         'tourTotalLabel'      => __( 'Tour total: %s', 'hotel-rates' ),
+                        'tourDepositAmountLabel' => __( 'Pay only %s deposit', 'hotel-rates' ),
                         'tourInvalidLabel'    => __( 'This tour has no rate for the chosen guest count.', 'hotel-rates' ),
                         'tourAddonsLabel'     => __( 'Optional add-ons:', 'hotel-rates' ),
                         'tourChildrenLabel'   => __( 'Children', 'hotel-rates' ),
@@ -465,6 +468,12 @@ class Hotel_Rates_Booking {
                         $show_tour_pickup_time_field = ! empty( $tour_pickup_time_field['enabled'] );
                         $tour_hotel_flight_label = ! empty( $tour_hotel_flight_field['label'] ) ? (string) $tour_hotel_flight_field['label'] : __( 'Hotel / Flight No.', 'hotel-rates' );
                         $tour_pickup_time_label = ! empty( $tour_pickup_time_field['label'] ) ? (string) $tour_pickup_time_field['label'] : __( 'Pick-up Time', 'hotel-rates' );
+
+                        if ( 'Day Tour' === (string) $tour_data['type'] ) {
+                                $tour_hotel_flight_label = $this->normalize_day_tour_display_label( $tour_hotel_flight_label );
+                                $tour_pickup_time_label = $this->normalize_day_tour_display_label( $tour_pickup_time_label );
+                        }
+
                         $tour_module = 'Day Tour' === (string) $tour_data['type'] ? 'day-tour' : sanitize_title( (string) $tour_data['type'] );
                         $tour_module_class = 'day-tour' === $tour_module ? ' hr-day-tour-booking-field' : ' hr-' . sanitize_html_class( $tour_module ) . '-booking-field';
                         ?>
@@ -2208,6 +2217,158 @@ class Hotel_Rates_Booking {
 		return $passed;
 	}
 
+	/**
+	 * Populate Ova's hidden legacy checkout fields for the compact Day Tour form.
+	 *
+	 * The Tripgo fields are intentionally removed for compact tour forms, but
+	 * Ova still validates their submitted metadata. Keep this bridge strictly
+	 * scoped to a matching Day Tour rate so Joiners and other modules are not
+	 * changed.
+	 */
+	public function prepare_day_tour_add_to_cart_request( $passed, $product_id, $quantity ) {
+		$day_tour_rate_id    = $this->get_linked_product_day_tour_rate_id( $product_id );
+		$posted_tour_rate_id = isset( $_POST['hr_tour_rate_id'] ) ? absint( wp_unslash( $_POST['hr_tour_rate_id'] ) ) : 0;
+
+		if ( ! $day_tour_rate_id || $posted_tour_rate_id !== $day_tour_rate_id ) {
+			return $passed;
+		}
+
+		$day_tour_rate = Hotel_Rates_DB::get_tour_rate_by_id( $day_tour_rate_id );
+
+		if ( ! $day_tour_rate || 'Day Tour' !== (string) $day_tour_rate->type ) {
+			return $passed;
+		}
+
+		$this->populate_day_tour_legacy_custom_checkout_fields( $product_id );
+
+		return $passed;
+	}
+
+	private function populate_day_tour_legacy_custom_checkout_fields( $product_id ) {
+		if ( ! function_exists( 'ovabrw_get_list_field_checkout' ) ) {
+			return;
+		}
+
+		$fields = ovabrw_get_list_field_checkout( $product_id );
+
+		if ( ! is_array( $fields ) || empty( $fields ) ) {
+			return;
+		}
+
+		$posted_custom_fields = $fields;
+
+		foreach ( $fields as $key => $field ) {
+			if ( ! is_array( $field ) || ( isset( $field['enabled'] ) && 'on' !== $field['enabled'] ) ) {
+				continue;
+			}
+
+			$type  = isset( $field['type'] ) ? sanitize_key( $field['type'] ) : 'text';
+			$value = $this->get_day_tour_legacy_custom_checkout_field_value( $key, $field, $type );
+
+			if ( isset( $posted_custom_fields[ $key ]['required'] ) ) {
+				$posted_custom_fields[ $key ]['required'] = '';
+			}
+
+			if ( isset( $posted_custom_fields[ $key ]['enabled'] ) ) {
+				$posted_custom_fields[ $key ]['enabled'] = '';
+			}
+
+			if ( isset( $posted_custom_fields[ $key ]['default'] ) ) {
+				$posted_custom_fields[ $key ]['default'] = '';
+			}
+
+			if ( 'file' === $type || '' === (string) $value ) {
+				continue;
+			}
+
+			if ( 'checkbox' === $type ) {
+				if ( $value && empty( $_POST[ $key ] ) ) {
+					$_POST[ $key ]    = array( $value => $value );
+					$_REQUEST[ $key ] = $_POST[ $key ];
+				}
+
+				continue;
+			}
+
+			if ( empty( $_POST[ $key ] ) ) {
+				$_POST[ $key ]    = $value;
+				$_REQUEST[ $key ] = $value;
+			}
+		}
+
+		$_POST['data_custom_ckf']    = wp_json_encode( $posted_custom_fields );
+		$_REQUEST['data_custom_ckf'] = $_POST['data_custom_ckf'];
+	}
+
+	private function get_day_tour_legacy_custom_checkout_field_value( $key, $field, $type ) {
+		$field_text = $this->get_day_tour_legacy_custom_field_search_text( $key, $field );
+		$guest_count     = $this->get_tour_paid_guest_count_from_request();
+		$tour_date       = $this->get_self_drive_request_date_value( 'ovabrw_pickup_date', array( 'pickup_date', 'checkin_date', 'tour_date', 'booking_date' ) );
+
+		if ( preg_match( '/hotel|flight|resort|accommodation|lodging|pick[\s_-]*up.*information|pickup.*information/i', $field_text ) ) {
+			return $this->get_day_tour_optional_legacy_field_value();
+		}
+
+		if ( preg_match( '/pick[\s_-]*up.*time|pickup.*time/i', $field_text ) ) {
+			return $this->get_day_tour_optional_legacy_field_value();
+		}
+
+		if ( preg_match( '/guest|pax|adult|number.*guest|no.*guest/i', $field_text ) && $guest_count > 0 ) {
+			return $this->get_day_tour_legacy_compatible_field_value( $field, $type, (string) $guest_count );
+		}
+
+		if ( preg_match( '/pick[\s_-]*up.*date|pickup.*date|start.*date|tour.*date|booking.*date/i', $field_text ) && $tour_date ) {
+			return $this->get_day_tour_legacy_compatible_field_value( $field, $type, $tour_date );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Keep the two configurable Day Tour fields optional in Ova's validator.
+	 *
+	 * This marker never matches an Ova select/radio/checkbox option, so it has
+	 * no custom-field price. It is removed from Day Tour cart data immediately
+	 * after Ova finishes validation.
+	 */
+	private function get_day_tour_optional_legacy_field_value() {
+		return '__hr_day_tour_optional_field__';
+	}
+
+	private function get_day_tour_legacy_custom_field_search_text( $key, $field ) {
+		$parts = array(
+			$key,
+			$field['name'] ?? '',
+			$field['label'] ?? '',
+			$field['placeholder'] ?? '',
+		);
+
+		return strtolower( implode( ' ', array_map( 'wp_strip_all_tags', array_map( 'strval', $parts ) ) ) );
+	}
+
+	private function get_day_tour_legacy_compatible_field_value( $field, $type, $value ) {
+		if ( ! in_array( $type, array( 'select', 'radio', 'checkbox' ), true ) ) {
+			return $value;
+		}
+
+		$needle = strtolower( trim( wp_strip_all_tags( (string) $value ) ) );
+
+		if ( '' === $needle ) {
+			return '';
+		}
+
+		foreach ( $this->get_motorbike_custom_field_options( $field, $type ) as $option_value => $option_label ) {
+			$option_value_text = strtolower( trim( wp_strip_all_tags( (string) $option_value ) ) );
+			$option_label_text = strtolower( trim( wp_strip_all_tags( (string) $option_label ) ) );
+
+			if ( $needle === $option_value_text || $needle === $option_label_text ) {
+				return (string) $option_value;
+			}
+		}
+
+		return '';
+	}
+
         public function add_cart_item_data( $cart_item_data, $product_id, $quantity ) {
                 $package_selection = $this->get_package_selection_from_request( $product_id );
                 if ( $package_selection ) {
@@ -2395,6 +2556,10 @@ class Hotel_Rates_Booking {
         }
 
         private function add_tour_selection_cart_item_data( $cart_item_data, $tour_selection ) {
+                if ( 'Day Tour' === (string) $tour_selection['type'] ) {
+                        $cart_item_data = $this->cleanup_day_tour_legacy_cart_item_data( $cart_item_data, $tour_selection );
+                }
+
                 $cart_item_data['hr_tour_rate_id']    = $tour_selection['tour_rate_id'];
                 $cart_item_data['hr_tour_name']       = $tour_selection['tour_name'];
                 $cart_item_data['hr_tour_type']       = $tour_selection['type'];
@@ -2413,10 +2578,39 @@ class Hotel_Rates_Booking {
                 $cart_item_data['hr_tour_hotel_flight_no_label'] = $tour_selection['hotel_flight_no_label'];
                 $cart_item_data['hr_tour_pickup_time'] = $tour_selection['pickup_time'];
                 $cart_item_data['hr_tour_pickup_time_label'] = $tour_selection['pickup_time_label'];
+
+                if ( 'Day Tour' === (string) $tour_selection['type'] ) {
+                        $cart_item_data['hr_tour_date'] = $tour_selection['tour_date'] ?? '';
+                        $cart_item_data['hr_tour_hotel_flight_no_enabled'] = ! empty( $tour_selection['hotel_flight_no_enabled'] ) ? 1 : 0;
+                        $cart_item_data['hr_tour_pickup_time_enabled'] = ! empty( $tour_selection['pickup_time_enabled'] ) ? 1 : 0;
+                        $cart_item_data['hr_tour_legacy_display_keys'] = ! empty( $tour_selection['legacy_display_keys'] ) && is_array( $tour_selection['legacy_display_keys'] )
+                                ? array_values( $tour_selection['legacy_display_keys'] )
+                                : array();
+                }
+
                 $cart_item_data['hr_tour_unit_price'] = $tour_selection['unit_price'];
                 $cart_item_data['hr_tour_addons']     = $tour_selection['addons'];
                 $cart_item_data['hr_tour_addons_total'] = $tour_selection['addons_total'];
                 $cart_item_data['hr_tour_total']      = $tour_selection['total'];
+
+                return $cart_item_data;
+        }
+
+        /**
+         * Remove Ova custom-field bridge values before Day Tour pricing/storage.
+         */
+        private function cleanup_day_tour_legacy_cart_item_data( $cart_item_data, $tour_selection ) {
+                $legacy_keys = ! empty( $tour_selection['legacy_display_keys'] ) && is_array( $tour_selection['legacy_display_keys'] )
+                        ? $tour_selection['legacy_display_keys']
+                        : array();
+
+                foreach ( $legacy_keys as $legacy_key ) {
+                        if ( is_string( $legacy_key ) && '' !== $legacy_key ) {
+                                unset( $cart_item_data[ $legacy_key ] );
+                        }
+                }
+
+                unset( $cart_item_data['custom_ckf'], $cart_item_data['cckf_qty'] );
 
                 return $cart_item_data;
         }
@@ -2831,15 +3025,33 @@ class Hotel_Rates_Booking {
                 }
 
                         if ( ! empty( $cart_item['hr_tour_rate_id'] ) ) {
-                        $item_data = $this->cleanup_tour_item_data( $item_data, $cart_item );
+                        $is_day_tour = 'Day Tour' === (string) ( $cart_item['hr_tour_type'] ?? '' );
+                        $item_data = $is_day_tour
+                                ? $this->cleanup_day_tour_item_data( $item_data, $cart_item )
+                                : $this->cleanup_tour_item_data( $item_data, $cart_item );
                         $hotel_flight_label = $this->get_tour_display_label_from_values( $cart_item, 'hr_tour_hotel_flight_no_label', __( 'Hotel / Flight No.', 'hotel-rates' ) );
                         $pickup_time_label = $this->get_tour_display_label_from_values( $cart_item, 'hr_tour_pickup_time_label', __( 'Pick-up Time', 'hotel-rates' ) );
+                        $show_hotel_flight = ! $is_day_tour || ! array_key_exists( 'hr_tour_hotel_flight_no_enabled', $cart_item ) || ! empty( $cart_item['hr_tour_hotel_flight_no_enabled'] );
+                        $show_pickup_time = ! $is_day_tour || ! array_key_exists( 'hr_tour_pickup_time_enabled', $cart_item ) || ! empty( $cart_item['hr_tour_pickup_time_enabled'] );
+
+                        if ( $is_day_tour ) {
+                                $hotel_flight_label = $this->normalize_day_tour_display_label( $hotel_flight_label );
+                                $pickup_time_label = $this->normalize_day_tour_display_label( $pickup_time_label );
+                        }
                         $children_label = $this->get_tour_display_label_from_values( $cart_item, 'hr_tour_children_label', __( 'Children', 'hotel-rates' ) );
                         $children_rate_label = sprintf(
                                 /* translators: %s: child guest label. */
                                 __( '%s Rate Per Guest', 'hotel-rates' ),
                                 $children_label
                         );
+
+                        if ( $is_day_tour && ! empty( $cart_item['hr_tour_date'] ) ) {
+                                $item_data[] = array(
+                                        'key'     => __( 'Tour Date', 'hotel-rates' ),
+                                        'value'   => wc_clean( $cart_item['hr_tour_date'] ),
+                                        'display' => '',
+                                );
+                        }
 
                         $item_data[] = array(
                                 'key'     => __( 'Tour Type', 'hotel-rates' ),
@@ -2893,7 +3105,7 @@ class Hotel_Rates_Booking {
                                 );
                         }
 
-                        if ( ! empty( $cart_item['hr_tour_hotel_flight_no'] ) ) {
+                        if ( $show_hotel_flight && ! empty( $cart_item['hr_tour_hotel_flight_no'] ) ) {
                                 $item_data[] = array(
                                         'key'     => $hotel_flight_label,
                                         'value'   => wc_clean( $cart_item['hr_tour_hotel_flight_no'] ),
@@ -2901,7 +3113,7 @@ class Hotel_Rates_Booking {
                                 );
                         }
 
-                        if ( ! empty( $cart_item['hr_tour_pickup_time'] ) ) {
+                        if ( $show_pickup_time && ! empty( $cart_item['hr_tour_pickup_time'] ) ) {
                                 $item_data[] = array(
                                         'key'     => $pickup_time_label,
                                         'value'   => wc_clean( $cart_item['hr_tour_pickup_time'] ),
@@ -3017,6 +3229,7 @@ class Hotel_Rates_Booking {
                 $is_destination_tour = ! empty( $values['hr_destination_tour_id'] );
                 $is_pickup_dropoff = ! empty( $values['hr_pickup_dropoff_service_id'] );
                 $is_tour = ! empty( $values['hr_tour_rate_id'] );
+                $is_day_tour = $is_tour && 'Day Tour' === (string) ( $values['hr_tour_type'] ?? '' );
                 $rebuild_pickup_dropoff_meta = false;
 
                 if ( ( ! $is_airport_transfer && ! $is_motorbike_rental && ! $is_boat_rental && ! $is_self_drive_rental && ! $is_port_transfer && ! $is_destination_tour && ! $is_pickup_dropoff && ! $is_tour ) || ! is_object( $item ) || ! method_exists( $item, 'get_meta_data' ) ) {
@@ -3118,7 +3331,19 @@ class Hotel_Rates_Booking {
                         }
 
                         if ( $is_tour ) {
-                                if ( $this->is_tour_clean_order_item_meta_key( $key, $values ) ) {
+                                $is_clean_tour_key = $this->is_tour_clean_order_item_meta_key( $key, $values );
+
+                                if ( $is_day_tour && $is_clean_tour_key && $this->normalize_day_tour_display_label( $key ) !== $key ) {
+                                        $item->delete_meta_data( $key );
+                                        continue;
+                                }
+
+                                if ( $is_clean_tour_key ) {
+                                        continue;
+                                }
+
+                                if ( $is_day_tour && $this->is_day_tour_legacy_display_key( $key, $values ) ) {
+                                        $item->delete_meta_data( $key );
                                         continue;
                                 }
 
@@ -3130,6 +3355,16 @@ class Hotel_Rates_Booking {
                                 if ( $this->should_remove_tour_item_data( $key, true, $values ) ) {
                                         $item->delete_meta_data( $key );
                                         continue;
+                                }
+
+                                if ( $is_day_tour ) {
+                                        $normalized_key = $this->normalize_day_tour_display_label( $key );
+
+                                        if ( '' !== $normalized_key && $normalized_key !== $key ) {
+                                                $item->delete_meta_data( $key );
+                                                $item->add_meta_data( $normalized_key, $value, true );
+                                                continue;
+                                        }
                                 }
                         }
 
@@ -3339,8 +3574,16 @@ class Hotel_Rates_Booking {
 
                 if ( ! empty( $values['hr_tour_rate_id'] ) ) {
                         $deleted_tour_meta_keys = array();
+                        $is_day_tour = 'Day Tour' === (string) ( $values['hr_tour_type'] ?? '' );
                         $hotel_flight_label = $this->get_tour_display_label_from_values( $values, 'hr_tour_hotel_flight_no_label', __( 'Hotel / Flight No.', 'hotel-rates' ) );
                         $pickup_time_label = $this->get_tour_display_label_from_values( $values, 'hr_tour_pickup_time_label', __( 'Pick-up Time', 'hotel-rates' ) );
+                        $show_hotel_flight = ! $is_day_tour || ! array_key_exists( 'hr_tour_hotel_flight_no_enabled', $values ) || ! empty( $values['hr_tour_hotel_flight_no_enabled'] );
+                        $show_pickup_time = ! $is_day_tour || ! array_key_exists( 'hr_tour_pickup_time_enabled', $values ) || ! empty( $values['hr_tour_pickup_time_enabled'] );
+
+                        if ( $is_day_tour ) {
+                                $hotel_flight_label = $this->normalize_day_tour_display_label( $hotel_flight_label );
+                                $pickup_time_label = $this->normalize_day_tour_display_label( $pickup_time_label );
+                        }
                         $children_label = $this->get_tour_display_label_from_values( $values, 'hr_tour_children_label', __( 'Children', 'hotel-rates' ) );
                         $children_rate_label = sprintf(
                                 /* translators: %s: child guest label. */
@@ -3358,6 +3601,11 @@ class Hotel_Rates_Booking {
                         $item->add_meta_data( __( 'Tour Type', 'hotel-rates' ), $values['hr_tour_type'] ?? '', true );
                         $delete_tour_meta( __( 'Tour', 'hotel-rates' ) );
                         $item->add_meta_data( __( 'Tour', 'hotel-rates' ), $values['hr_tour_name'] ?? '', true );
+
+                        if ( $is_day_tour && ! empty( $values['hr_tour_date'] ) ) {
+                                $delete_tour_meta( __( 'Tour Date', 'hotel-rates' ) );
+                                $item->add_meta_data( __( 'Tour Date', 'hotel-rates' ), $values['hr_tour_date'], true );
+                        }
 
                         if ( ! empty( $values['hr_tour_place_name'] ) ) {
                                 $delete_tour_meta( __( 'Place', 'hotel-rates' ) );
@@ -3388,13 +3636,20 @@ class Hotel_Rates_Booking {
                                 $item->add_meta_data( $children_rate_label, wp_strip_all_tags( wc_price( (float) $values['hr_tour_children_unit_price'] ) ), true );
                         }
 
-                        if ( ! empty( $values['hr_tour_hotel_flight_no'] ) ) {
+                        if ( $is_day_tour ) {
+                                $delete_tour_meta( __( 'Hotel / Flight No.', 'hotel-rates' ) );
+                                $delete_tour_meta( $hotel_flight_label );
+                                $delete_tour_meta( __( 'Pick-up Time', 'hotel-rates' ) );
+                                $delete_tour_meta( $pickup_time_label );
+                        }
+
+                        if ( $show_hotel_flight && ! empty( $values['hr_tour_hotel_flight_no'] ) ) {
                                 $delete_tour_meta( __( 'Hotel / Flight No.', 'hotel-rates' ) );
                                 $delete_tour_meta( $hotel_flight_label );
                                 $item->add_meta_data( $hotel_flight_label, $values['hr_tour_hotel_flight_no'], true );
                         }
 
-                        if ( ! empty( $values['hr_tour_pickup_time'] ) ) {
+                        if ( $show_pickup_time && ! empty( $values['hr_tour_pickup_time'] ) ) {
                                 $delete_tour_meta( __( 'Pick-up Time', 'hotel-rates' ) );
                                 $delete_tour_meta( $pickup_time_label );
                                 $item->add_meta_data( $pickup_time_label, $values['hr_tour_pickup_time'], true );
@@ -4187,6 +4442,72 @@ class Hotel_Rates_Booking {
                 return $cleaned;
         }
 
+        private function cleanup_day_tour_item_data( $item_data, $cart_item = array() ) {
+                $cleaned = array();
+                $seen_keys = array();
+
+                foreach ( $item_data as $data ) {
+                        if ( ! is_array( $data ) ) {
+                                $cleaned[] = $data;
+                                continue;
+                        }
+
+                        $key_property = isset( $data['key'] ) ? 'key' : ( isset( $data['name'] ) ? 'name' : '' );
+                        $key = '' !== $key_property ? (string) $data[ $key_property ] : '';
+
+                        if (
+                                $this->is_blank_item_data_key( $key )
+                                || $this->should_remove_tour_item_data( $key, true, $cart_item )
+                                || $this->is_day_tour_legacy_display_key( $key, $cart_item )
+                        ) {
+                                continue;
+                        }
+
+                        $normalized_key = $this->normalize_day_tour_display_label( $key );
+                        $key_slug = $this->get_item_data_key_slug( $normalized_key );
+
+                        if ( '' === $normalized_key || '' === $key_slug || isset( $seen_keys[ $key_slug ] ) ) {
+                                continue;
+                        }
+
+                        if ( '' !== $key_property ) {
+                                $data[ $key_property ] = $normalized_key;
+                        }
+
+                        $seen_keys[ $key_slug ] = true;
+                        $cleaned[] = $data;
+                }
+
+                return $cleaned;
+        }
+
+        private function is_day_tour_legacy_display_key( $key, $values = array() ) {
+                $key_slug = $this->get_item_data_key_slug( $this->normalize_day_tour_display_label( $key ) );
+                $legacy_slugs = array(
+                        'tour_date',
+                        'choose_pick_up_time',
+                        'pick_up_information',
+                        'optional_add_ons',
+                        'for_pick_up_outside_dumaguete_city',
+                );
+
+                if ( in_array( $key_slug, $legacy_slugs, true ) ) {
+                        return true;
+                }
+
+                if ( empty( $values['hr_tour_legacy_display_keys'] ) || ! is_array( $values['hr_tour_legacy_display_keys'] ) ) {
+                        return false;
+                }
+
+                foreach ( $values['hr_tour_legacy_display_keys'] as $legacy_key ) {
+                        if ( $key_slug === $this->get_item_data_key_slug( $legacy_key ) ) {
+                                return true;
+                        }
+                }
+
+                return false;
+        }
+
         private function cleanup_tour_item_data( $item_data, $cart_item = array() ) {
                 $cleaned = array();
 
@@ -4235,6 +4556,7 @@ class Hotel_Rates_Booking {
                 if ( in_array( $key_slug, array(
                         'tour_type',
                         'tour',
+                        'tour_date',
                         'place',
                         'guests',
                         'adult',
@@ -6376,8 +6698,12 @@ class Hotel_Rates_Booking {
                         return false;
                 }
 
-                $hotel_flight_no = $this->get_posted_text_value( 'hr_tour_hotel_flight_no' );
-                $pickup_time = $this->get_posted_text_value( 'hr_tour_pickup_time' );
+                $booking_fields = ! empty( $tour_data['bookingFields'] ) && is_array( $tour_data['bookingFields'] ) ? $tour_data['bookingFields'] : Hotel_Rates_DB::normalize_tour_booking_fields( array() );
+                $hotel_flight_no_enabled = $this->is_tour_booking_field_enabled( $booking_fields, 'hotel_flight_no' );
+                $pickup_time_enabled = $this->is_tour_booking_field_enabled( $booking_fields, 'pickup_time' );
+                $hotel_flight_no = $hotel_flight_no_enabled ? $this->get_posted_text_value( 'hr_tour_hotel_flight_no' ) : '';
+                $pickup_time = $pickup_time_enabled ? $this->get_posted_text_value( 'hr_tour_pickup_time' ) : '';
+                $tour_date = $this->get_self_drive_request_date_value( 'ovabrw_pickup_date', array( 'pickup_date', 'checkin_date', 'tour_date', 'booking_date' ) );
                 $children_rates = ! empty( $tour_data['childrenRates'] ) && is_array( $tour_data['childrenRates'] ) ? $tour_data['childrenRates'] : Hotel_Rates_DB::normalize_tour_children_rates( array() );
                 $children_enabled = ! empty( $children_rates['enabled'] );
                 $children_label = $this->get_tour_children_label_from_rates( $children_rates );
@@ -6393,7 +6719,6 @@ class Hotel_Rates_Booking {
                 $children_unit_price = 0.0;
                 $children_total = 0.0;
                 $infants = isset( $_POST['hr_tour_infants'] ) ? max( 0, (int) wp_unslash( $_POST['hr_tour_infants'] ) ) : 0;
-                $booking_fields = ! empty( $tour_data['bookingFields'] ) && is_array( $tour_data['bookingFields'] ) ? $tour_data['bookingFields'] : Hotel_Rates_DB::normalize_tour_booking_fields( array() );
                 $addons_payload = isset( $_POST['hr_tour_addons_payload'] ) ? json_decode( wp_unslash( $_POST['hr_tour_addons_payload'] ), true ) : array();
                 $addons = $this->get_selected_tour_addons( $tour_data, $addons_payload );
                 $addons_total = 0.0;
@@ -6413,6 +6738,7 @@ class Hotel_Rates_Booking {
                         'tour_name'    => $tour_data['tourName'],
                         'type'         => $tour_data['type'],
                         'place_name'   => $tour_data['placeName'],
+                        'tour_date'    => $tour_date,
                         'pax'          => $pax,
                         'children'     => $children,
                         'children_enabled' => $children_enabled,
@@ -6421,9 +6747,12 @@ class Hotel_Rates_Booking {
                         'children_total' => $children_total,
                         'infants'      => $infants,
                         'hotel_flight_no' => $hotel_flight_no,
-                        'hotel_flight_no_label' => $this->get_tour_booking_field_label( $booking_fields, 'hotel_flight_no', __( 'Hotel / Flight No.', 'hotel-rates' ) ),
+                        'hotel_flight_no_enabled' => $hotel_flight_no_enabled,
+                        'hotel_flight_no_label' => $this->get_day_tour_booking_field_label( $booking_fields, 'hotel_flight_no', __( 'Hotel / Flight No.', 'hotel-rates' ) ),
                         'pickup_time'  => $pickup_time,
-                        'pickup_time_label' => $this->get_tour_booking_field_label( $booking_fields, 'pickup_time', __( 'Pick-up Time', 'hotel-rates' ) ),
+                        'pickup_time_enabled' => $pickup_time_enabled,
+                        'pickup_time_label' => $this->get_day_tour_booking_field_label( $booking_fields, 'pickup_time', __( 'Pick-up Time', 'hotel-rates' ) ),
+                        'legacy_display_keys' => $this->get_day_tour_legacy_display_keys( $product_id ),
                         'unit_price'   => $unit_price,
                         'addons'       => $addons,
                         'addons_total' => $addons_total,
@@ -6532,6 +6861,64 @@ class Hotel_Rates_Booking {
                 $label = trim( wp_strip_all_tags( (string) $booking_fields[ $field_key ]['label'] ) );
 
                 return '' !== $label ? $label : $default_label;
+        }
+
+        private function is_tour_booking_field_enabled( $booking_fields, $field_key ) {
+                return is_array( $booking_fields )
+                        && isset( $booking_fields[ $field_key ] )
+                        && is_array( $booking_fields[ $field_key ] )
+                        && ! empty( $booking_fields[ $field_key ]['enabled'] );
+        }
+
+        private function get_day_tour_booking_field_label( $booking_fields, $field_key, $default_label ) {
+                $label = $this->get_tour_booking_field_label( $booking_fields, $field_key, $default_label );
+                $label = $this->normalize_day_tour_display_label( $label );
+
+                return '' !== $label ? $label : $default_label;
+        }
+
+        private function normalize_day_tour_display_label( $label ) {
+                $label = trim( wp_strip_all_tags( (string) $label ) );
+
+                return rtrim( $label, ' :' );
+        }
+
+        private function get_day_tour_legacy_display_keys( $product_id ) {
+                $keys = array(
+                        __( 'Tour Date', 'hotel-rates' ),
+                        __( 'Choose pick-up time', 'hotel-rates' ),
+                        __( 'Pick-up Information', 'hotel-rates' ),
+                        __( 'Optional add-ons', 'hotel-rates' ),
+                        __( 'For pick-up outside Dumaguete City', 'hotel-rates' ),
+                );
+
+                if ( function_exists( 'ovabrw_get_list_field_checkout' ) ) {
+                        $fields = ovabrw_get_list_field_checkout( $product_id );
+
+                        if ( is_array( $fields ) ) {
+                                foreach ( $fields as $key => $field ) {
+                                        if ( ! is_array( $field ) ) {
+                                                continue;
+                                        }
+
+                                        $keys[] = $key;
+                                        $keys[] = $field['name'] ?? '';
+                                        $keys[] = $field['label'] ?? '';
+                                }
+                        }
+                }
+
+                $normalized_keys = array();
+
+                foreach ( $keys as $key ) {
+                        $key = $this->normalize_day_tour_display_label( $key );
+
+                        if ( '' !== $key ) {
+                                $normalized_keys[ $this->get_item_data_key_slug( $key ) ] = $key;
+                        }
+                }
+
+                return array_values( $normalized_keys );
         }
 
         private function get_selected_tour_addons( $tour_data, $payload ) {

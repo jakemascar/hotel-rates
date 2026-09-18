@@ -302,6 +302,17 @@
         font-weight: 600;
 }
 
+.hr-day-tour-booking-field .ovabrw-deposit .title-deposit,
+.hr-joiner-booking-field .ovabrw-deposit .title-deposit,
+.hr-package-booking-form .ovabrw-deposit .title-deposit {
+        display: none !important;
+}
+
+.hr-tour-deposit-amount-message,
+.hr-package-deposit-amount-message {
+        margin: 0 0 8px;
+}
+
 .hr-tour-addon-selectors {
         margin-top: 14px;
 }

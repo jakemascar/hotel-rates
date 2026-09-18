@@ -1503,11 +1503,73 @@
                 var valid = $form.data('hr-package-total-valid') === true;
                 var $ajaxTotal = getPackageAjaxTotal($form);
 
+                syncPackageDepositAmountMessage($form);
+
                 if (!$ajaxTotal.length) {
                         return;
                 }
 
                 $ajaxTotal.text(valid && total > 0 && Number.isFinite(total) ? formatPrice(total) : '');
+        }
+
+        function syncPackageDepositAmountMessage($form) {
+                var $field;
+                var $deposit;
+                var $message;
+                var $controls;
+                var selectedPayment;
+                var total;
+                var valid;
+                var label;
+
+                if (!$form.hasClass('hr-package-booking-form')) {
+                        return;
+                }
+
+                $field = $form.find('.hr-package-booking-field[data-booking-module=package-deal]').first();
+
+                if (!$field.length) {
+                        return;
+                }
+
+                $deposit = $form.find('.ovabrw-deposit').first();
+
+                if (!$deposit.length) {
+                        return;
+                }
+
+                $deposit.find('.title-deposit').first().attr('aria-hidden', 'true');
+                $message = $deposit.find('.hr-package-deposit-amount-message').first();
+
+                if (!$message.length) {
+                        $message = $('<p>', {
+                                'class': 'hr-package-deposit-amount-message',
+                                'aria-live': 'polite',
+                                hidden: true
+                        });
+                        $controls = $deposit.find('.ovabrw-type-deposit').first();
+
+                        if ($controls.length) {
+                                $message.insertBefore($controls);
+                        } else {
+                                $deposit.prepend($message);
+                        }
+                }
+
+                selectedPayment = $deposit.find('input[name=ova_type_deposit]:checked').val();
+                total = Number($form.data('hr-package-total') || 0);
+                valid = $form.data('hr-package-total-valid') === true;
+
+                if (selectedPayment !== 'deposit' || !valid || total <= 0 || !Number.isFinite(total)) {
+                        $message.text('').prop('hidden', true);
+                        return;
+                }
+
+                label = window.hrBooking && window.hrBooking.packageDepositAmountLabel
+                        ? window.hrBooking.packageDepositAmountLabel
+                        : 'Pay only %s deposit';
+
+                $message.text(label.replace('%s', formatPrice(total * 0.5))).prop('hidden', false);
         }
 
         function schedulePackageAjaxTotalSync($form) {
@@ -8022,6 +8084,65 @@
                 }
 
                 $total.text(valid && total > 0 && Number.isFinite(total) ? (window.hrBooking ? window.hrBooking.tourTotalLabel : 'Tour total: %s').replace('%s', formatPrice(total)) : '');
+                syncTourDepositAmountMessage($form);
+        }
+
+        function syncTourDepositAmountMessage($form) {
+                var tourData = getTourDataForForm($form);
+                var isDayTour = isDayTourData(tourData);
+                var isJoinerTour = isJoinerTourData(tourData);
+                var $field;
+                var $deposit;
+                var $message;
+                var $controls;
+                var selectedPayment;
+                var total;
+                var valid;
+                var label;
+
+                if (!isDayTour && !isJoinerTour) {
+                        return;
+                }
+
+                $field = $form.find(isDayTour ? '.hr-day-tour-booking-field' : '.hr-joiner-booking-field').first();
+                $deposit = $field.find('.ovabrw-deposit').first();
+
+                if (!$deposit.length) {
+                        return;
+                }
+
+                $deposit.find('.title-deposit').first().attr('aria-hidden', 'true');
+                $message = $deposit.find('.hr-tour-deposit-amount-message').first();
+
+                if (!$message.length) {
+                        $message = $('<p>', {
+                                'class': 'hr-tour-deposit-amount-message',
+                                'aria-live': 'polite',
+                                hidden: true
+                        });
+                        $controls = $deposit.find('.ovabrw-type-deposit').first();
+
+                        if ($controls.length) {
+                                $message.insertBefore($controls);
+                        } else {
+                                $deposit.prepend($message);
+                        }
+                }
+
+                selectedPayment = $deposit.find('input[name=ova_type_deposit]:checked').val();
+                total = Number($form.data('hr-tour-total') || 0);
+                valid = $form.data('hr-tour-total-valid') === true;
+
+                if (selectedPayment !== 'deposit' || !valid || total <= 0 || !Number.isFinite(total)) {
+                        $message.text('').prop('hidden', true);
+                        return;
+                }
+
+                label = window.hrBooking && window.hrBooking.tourDepositAmountLabel
+                        ? window.hrBooking.tourDepositAmountLabel
+                        : 'Pay only %s deposit';
+
+                $message.text(label.replace('%s', formatPrice(total * 0.5))).prop('hidden', false);
         }
 
         function getTourAdultUnitPrice($form, tourData) {
@@ -8261,6 +8382,7 @@
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
                         $form.data('hr-tour-unit-price-valid', false);
+                        syncTourDepositAmountMessage($form);
                         syncTourAjaxTotal($form);
                         return false;
                 }
@@ -8278,6 +8400,7 @@
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
                         $form.data('hr-tour-unit-price-valid', false);
+                        syncTourDepositAmountMessage($form);
                         syncTourAjaxTotal($form);
                         return false;
                 }
@@ -8343,6 +8466,7 @@
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
                         $form.data('hr-tour-unit-price-valid', false);
+                        syncTourDepositAmountMessage($form);
                         syncTourAjaxTotal($form);
                         return false;
                 }
@@ -8360,6 +8484,7 @@
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
                         $form.data('hr-tour-unit-price-valid', false);
+                        syncTourDepositAmountMessage($form);
                         syncTourAjaxTotal($form);
                         return false;
                 }
@@ -8485,6 +8610,12 @@
                         scheduleTourFreeGuestRowsSync($form);
                 });
 
+                $form.on('change', '.hr-day-tour-booking-field input[name=ova_type_deposit]', function () {
+                        window.setTimeout(function () {
+                                syncTourDepositAmountMessage($form);
+                        }, 0);
+                });
+
                 $form.on('click', '.ovabrw-wrapper-guestspicker .guests-icon', function () {
                         scheduleDayTourRefresh(true);
                         scheduleTourFreeGuestRowsSync($form);
@@ -8591,6 +8722,12 @@
                 $form.on('change input blur', PACKAGE_START_DATE_INPUT_SELECTOR, function () {
                         scheduleJoinerTourRefresh(true);
                         scheduleTourFreeGuestRowsSync($form);
+                });
+
+                $form.on('change', '.hr-joiner-booking-field input[name=ova_type_deposit]', function () {
+                        window.setTimeout(function () {
+                                syncTourDepositAmountMessage($form);
+                        }, 0);
                 });
 
                 $form.on('click', '.ovabrw-wrapper-guestspicker .guests-icon', function () {
@@ -9142,6 +9279,12 @@
                 $form.on('change input blur', PACKAGE_START_DATE_INPUT_SELECTOR, function () {
                         setActivePackageCalendarRangeForm($form);
                         schedulePackageDateRangeSync($form, packageData);
+                });
+
+                $form.on('change', '.ovabrw-deposit input[name=ova_type_deposit]', function () {
+                        window.setTimeout(function () {
+                                syncPackageDepositAmountMessage($form);
+                        }, 0);
                 });
 
                 $form.on('submit', function () {
