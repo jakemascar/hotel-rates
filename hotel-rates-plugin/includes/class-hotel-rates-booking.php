@@ -249,6 +249,7 @@ class Hotel_Rates_Booking {
                         'currencySymbol'    => function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, get_bloginfo( 'charset' ) ) : '',
                         'locale'            => str_replace( '_', '-', get_locale() ),
                         'version'           => HR_VERSION,
+                        'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
                         'selectPlaceholder' => __( 'Select a hotel package', 'hotel-rates' ),
                         'fieldLabel'        => __( 'Hotel Package', 'hotel-rates' ),
                         'priceLabel'        => __( 'Adds %s to this booking.', 'hotel-rates' ),
@@ -596,7 +597,7 @@ class Hotel_Rates_Booking {
                                                 <input
                                                         type="text"
                                                         id="<?php echo esc_attr( $self_drive_return_date_id ); ?>"
-                                                        class="hr-self-drive-return-date-input checkout-date ovabrw-datepicker ovabrw-input-required"
+                                                        class="hr-self-drive-return-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required"
                                                         name="hr_self_drive_return_date_display"
                                                         placeholder="<?php esc_attr_e( 'DD-MM-YYYY', 'hotel-rates' ); ?>"
                                                         required
@@ -675,7 +676,7 @@ class Hotel_Rates_Booking {
                                                 <input
                                                         type="text"
                                                         id="<?php echo esc_attr( $destination_tour_date_id ); ?>"
-                                                        class="hr-destination-tour-date-input checkout-date ovabrw-datepicker ovabrw-input-required"
+                                                        class="hr-destination-tour-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required"
                                                         name="hr_destination_tour_rental_date_display"
                                                         placeholder="<?php esc_attr_e( 'DD-MM-YYYY', 'hotel-rates' ); ?>"
                                                         required
@@ -852,7 +853,7 @@ class Hotel_Rates_Booking {
                                                 <input
                                                         type="text"
                                                         id="<?php echo esc_attr( $pickup_dropoff_date_id ); ?>"
-                                                        class="hr-pickup-dropoff-date-input checkout-date ovabrw-datepicker ovabrw-input-required"
+                                                        class="hr-pickup-dropoff-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required"
                                                         name="hr_pickup_dropoff_rental_date_display"
                                                         placeholder="<?php esc_attr_e( 'DD-MM-YYYY', 'hotel-rates' ); ?>"
                                                         required

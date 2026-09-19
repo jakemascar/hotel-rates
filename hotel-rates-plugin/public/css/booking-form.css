@@ -690,6 +690,10 @@
         height: 40px !important;
 }
 
+.hr-destination-tour-booking-field .hr-destination-tour-date-input.hr-uniform-booking-datepicker:not(:disabled) {
+        cursor: pointer !important;
+}
+
 .hr-port-transfer-from-select,
 .hr-port-transfer-to-select {
         padding-left: 10px !important;

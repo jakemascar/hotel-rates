@@ -40,6 +40,7 @@
         var selfDriveDebugEnabled = isSelfDriveDebugEnabled();
         var packageCalendarRangeActiveForm = null;
         var packageCalendarRangeDocumentHooksBound = false;
+        var uniformBookingCalendarOptionsRequests = {};
 
         installSafeClosestPolyfill();
 
@@ -912,6 +913,452 @@
                 ].join(separator);
 
                 return formatted + suffix;
+        }
+
+        function getUniformBookingCalendarModuleSelector(moduleName) {
+                var selectors = {
+                        'seaport-transfer': '.hr-port-transfer-booking-field',
+                        'van-rental': '.hr-pickup-dropoff-booking-field',
+                        'self-drive': '.hr-self-drive-booking-field',
+                        'motorbike-rental': '.hr-motorbike-booking-field',
+                        'boat-rental': '.hr-boat-booking-field',
+                        'destination-tour': '.hr-destination-tour-booking-field'
+                };
+
+                return selectors[moduleName] || '';
+        }
+
+        function isUniformBookingCalendarModule($form, moduleName) {
+                var selector = getUniformBookingCalendarModuleSelector(moduleName);
+
+                return !!(selector && $form && $form.length && $form.find(selector).length);
+        }
+
+        function getUniformBookingCalendarProductId($form) {
+                var $module = $form.find([
+                        '.hr-port-transfer-booking-field',
+                        '.hr-pickup-dropoff-booking-field',
+                        '.hr-self-drive-booking-field',
+                        '.hr-motorbike-booking-field',
+                        '.hr-boat-booking-field',
+                        '.hr-destination-tour-booking-field'
+                ].join(',')).first();
+
+                return String(
+                        $module.attr('data-product-id') ||
+                        $form.find('input[name=product_id]').val() ||
+                        $form.find('input[name=add-to-cart]').val() ||
+                        ''
+                );
+        }
+
+        function getUniformBookingCalendarFallbackOptions() {
+                var today = normalizeDate(new Date());
+                var maxDate = new Date(today.getFullYear() + 3, 11, 31);
+                var sharedOptions = window.datePickerOptions && typeof window.datePickerOptions === 'object' ? window.datePickerOptions : {};
+
+                return $.extend(true, {
+                        css: [],
+                        firstDay: 1,
+                        lang: 'en',
+                        format: 'd-m-Y',
+                        zIndex: 999999999,
+                        readonly: true,
+                        header: '',
+                        autoApply: true,
+                        locale: {
+                                cancel: 'Cancel',
+                                apply: 'Apply'
+                        },
+                        AmpPlugin: {
+                                dropdown: {
+                                        months: true,
+                                        years: true,
+                                        minYear: today.getFullYear(),
+                                        maxYear: maxDate.getFullYear()
+                                },
+                                resetButton: true,
+                                darkMode: false
+                        },
+                        LockPlugin: {
+                                minDate: [
+                                        padDatePart(today.getDate()),
+                                        padDatePart(today.getMonth() + 1),
+                                        today.getFullYear()
+                                ].join('-'),
+                                maxDate: [
+                                        padDatePart(maxDate.getDate()),
+                                        padDatePart(maxDate.getMonth() + 1),
+                                        maxDate.getFullYear()
+                                ].join('-'),
+                                presets: true,
+                                inseparable: false
+                        },
+                        disableWeekDays: [],
+                        disableDates: [],
+                        bookedDates: [],
+                        allowedDates: []
+                }, sharedOptions);
+        }
+
+        function getUniformBookingCalendarAjaxUrl() {
+                if (window.hrBooking && window.hrBooking.ajaxUrl) {
+                        return window.hrBooking.ajaxUrl;
+                }
+
+                if (window.ajax_object && window.ajax_object.ajax_url) {
+                        return window.ajax_object.ajax_url;
+                }
+
+                return '';
+        }
+
+        function getUniformBookingCalendarOptions($form) {
+                var productId = getUniformBookingCalendarProductId($form);
+                var ajaxUrl = getUniformBookingCalendarAjaxUrl();
+                var cacheKey = productId || 'default';
+                var deferred;
+
+                if (uniformBookingCalendarOptionsRequests[cacheKey]) {
+                        return uniformBookingCalendarOptionsRequests[cacheKey];
+                }
+
+                deferred = $.Deferred();
+                uniformBookingCalendarOptionsRequests[cacheKey] = deferred.promise();
+
+                if (!ajaxUrl || !productId) {
+                        deferred.resolve(getUniformBookingCalendarFallbackOptions());
+                        return deferred.promise();
+                }
+
+                $.ajax({
+                        url: ajaxUrl,
+                        type: 'POST',
+                        data: {
+                                action: 'ovabrw_loading_datepicker',
+                                product_id: productId,
+                                form: 'booking'
+                        }
+                }).done(function (response) {
+                        var parsed = response;
+
+                        if (typeof parsed === 'string') {
+                                try {
+                                        parsed = JSON.parse(parsed);
+                                } catch (error) {
+                                        parsed = null;
+                                }
+                        }
+
+                        if (parsed && parsed.datePickerOptions && typeof parsed.datePickerOptions === 'object') {
+                                deferred.resolve(parsed.datePickerOptions);
+                                return;
+                        }
+
+                        deferred.resolve(getUniformBookingCalendarFallbackOptions());
+                }).fail(function () {
+                        deferred.resolve(getUniformBookingCalendarFallbackOptions());
+                });
+
+                return deferred.promise();
+        }
+
+        function getUniformBookingCalendarFormat(format) {
+                switch (format) {
+                case 'Y-m-d':
+                        return 'YYYY-MM-DD';
+                case 'Y/m/d':
+                        return 'YYYY/MM/DD';
+                case 'm/d/Y':
+                        return 'MM/DD/YYYY';
+                default:
+                        return 'DD-MM-YYYY';
+                }
+        }
+
+        function getUniformBookingCalendarDateObject(value) {
+                if (!value) {
+                        return null;
+                }
+
+                if (value instanceof Date) {
+                        return normalizeDate(value);
+                }
+
+                if (typeof value.toJSDate === 'function') {
+                        return normalizeDate(value.toJSDate());
+                }
+
+                if (typeof value.getTime === 'function') {
+                        return normalizeDate(new Date(value.getTime()));
+                }
+
+                return parseDateParts(String(value));
+        }
+
+        function destroyUniformBookingCalendar($input) {
+                var picker = $input.data('hr-uniform-booking-easepick');
+
+                if (picker && typeof picker.destroy === 'function') {
+                        try {
+                                picker.destroy();
+                        } catch (error) {
+                                // The input remains usable if a third-party picker is already gone.
+                        }
+                }
+
+                if ($input[0] && $input[0]._flatpickr && typeof $input[0]._flatpickr.destroy === 'function') {
+                        try {
+                                $input[0]._flatpickr.destroy();
+                        } catch (error) {
+                                // Continue with the shared calendar.
+                        }
+                }
+
+                try {
+                        if ($.fn.datepicker && $input.data('datepicker')) {
+                                $input.datepicker('destroy');
+                        }
+                } catch (error) {
+                        // Continue with the shared calendar.
+                }
+
+                $input
+                        .removeData('hr-uniform-booking-easepick')
+                        .removeData('hr-uniform-booking-calendar-bound')
+                        .removeData('hr-uniform-booking-calendar-pending');
+        }
+
+        function initUniformBookingCalendarFallback($form, $input, options, contextualMinimumDate) {
+                var maximumDate = options && options.LockPlugin ? options.LockPlugin.maxDate : '';
+                var minimumDate = contextualMinimumDate || (options && options.LockPlugin ? options.LockPlugin.minDate : '') || 'today';
+
+                if (window.flatpickr && !$input[0]._flatpickr) {
+                        try {
+                                window.flatpickr($input[0], {
+                                        dateFormat: 'd-m-Y',
+                                        minDate: minimumDate,
+                                        maxDate: maximumDate || null,
+                                        allowInput: false,
+                                        onChange: function () {
+                                                $input.trigger('input').trigger('change');
+                                        }
+                                });
+                                $input.data('hr-uniform-booking-calendar-bound', 'flatpickr');
+                                return;
+                        } catch (error) {
+                                // Fall through to jQuery UI or the native date input.
+                        }
+                }
+
+                if ($.fn.datepicker) {
+                        try {
+                                $input.datepicker({
+                                        dateFormat: 'dd-mm-yy',
+                                        minDate: contextualMinimumDate ? parseDateParts(contextualMinimumDate) : 0,
+                                        maxDate: maximumDate ? parseDateParts(maximumDate) : null,
+                                        beforeShowDay: function (date) {
+                                                var minDate = contextualMinimumDate ? parseDateParts(contextualMinimumDate) : normalizeDate(new Date());
+
+                                                return [!minDate || normalizeDate(date).getTime() >= minDate.getTime(), ''];
+                                        },
+                                        onSelect: function () {
+                                                $(this).trigger('input').trigger('change');
+                                        }
+                                });
+                                $input.data('hr-uniform-booking-calendar-bound', 'jquery-ui');
+                                return;
+                        } catch (error) {
+                                // Fall through to the native date input.
+                        }
+                }
+
+                $input
+                        .removeAttr('readonly')
+                        .attr('type', 'date')
+                        .attr('min', getPickupDropoffNativeMinDate())
+                        .data('hr-uniform-booking-calendar-bound', 'native-date');
+        }
+
+        function initUniformBookingCalendar($form, $input, moduleName, contextualMinimumDate) {
+                if (!$input || !$input.length || !isUniformBookingCalendarModule($form, moduleName)) {
+                        return;
+                }
+
+                $input = $input.first();
+
+                if ($input.data('hr-uniform-booking-calendar-bound') || $input.data('hr-uniform-booking-calendar-pending')) {
+                        return;
+                }
+
+                $input
+                        .data('hr-uniform-booking-calendar-pending', true)
+                        .prop('disabled', true)
+                        .attr('type', 'text')
+                        .attr('placeholder', 'DD-MM-YYYY')
+                        .attr('autocomplete', 'off')
+                        .attr('readonly', 'readonly')
+                        .attr('aria-busy', 'true')
+                        .attr('data-hr-calendar-module', moduleName)
+                        .addClass('hr-uniform-booking-datepicker');
+
+                getUniformBookingCalendarOptions($form).done(function (options) {
+                        var format = getUniformBookingCalendarFormat(options.format);
+                        var disabledWeekDays = $.isArray(options.disableWeekDays) ? options.disableWeekDays : [];
+                        var disabledDates = $.isArray(options.disableDates) ? options.disableDates : [];
+                        var bookedDates = $.isArray(options.bookedDates) ? options.bookedDates : [];
+                        var allowedDates = $.isArray(options.allowedDates) ? options.allowedDates : [];
+                        var lockOptions = options.LockPlugin || {};
+                        var resolvedContextMinimum = typeof contextualMinimumDate === 'function' ? contextualMinimumDate() : contextualMinimumDate;
+                        var picker;
+
+                        $input
+                                .removeData('hr-uniform-booking-calendar-pending')
+                                .prop('disabled', false)
+                                .removeAttr('aria-busy');
+
+                        if (!window.easepick || !window.easepick.create) {
+                                initUniformBookingCalendarFallback($form, $input, options, resolvedContextMinimum);
+                                return;
+                        }
+
+                        destroyUniformBookingCalendar($input);
+                        $input
+                                .attr('type', 'text')
+                                .attr('placeholder', 'DD-MM-YYYY')
+                                .attr('readonly', 'readonly')
+                                .attr('data-hr-calendar-module', moduleName)
+                                .addClass('hr-uniform-booking-datepicker');
+
+                        try {
+                                picker = new window.easepick.create({
+                                        element: $input[0],
+                                        css: options.css || [],
+                                        firstDay: parseInt(options.firstDay, 10) || 1,
+                                        lang: options.lang || 'en',
+                                        zIndex: parseInt(options.zIndex, 10) || 999999999,
+                                        grid: 1,
+                                        calendars: 1,
+                                        format: format,
+                                        readonly: true,
+                                        header: options.header || '',
+                                        autoApply: options.autoApply !== false,
+                                        AmpPlugin: options.AmpPlugin || {},
+                                        locale: options.locale || {},
+                                        LockPlugin: {
+                                                minDate: resolvedContextMinimum || lockOptions.minDate,
+                                                maxDate: lockOptions.maxDate,
+                                                presets: lockOptions.presets,
+                                                inseparable: lockOptions.inseparable,
+                                                filter: function (date) {
+                                                        var weekday = typeof date.getDay === 'function' ? date.getDay().toString() : '';
+                                                        var value = typeof date.format === 'function' ? date.format(format) : '';
+                                                        var dateObject = getUniformBookingCalendarDateObject(date);
+                                                        var dynamicMinimumValue = typeof contextualMinimumDate === 'function' ? contextualMinimumDate() : contextualMinimumDate;
+                                                        var dynamicMinimum = getUniformBookingCalendarDateObject(dynamicMinimumValue);
+
+                                                        if (disabledWeekDays.length && disabledWeekDays.indexOf(weekday) !== -1) {
+                                                                return true;
+                                                        }
+
+                                                        if (disabledDates.length && disabledDates.indexOf(value) !== -1) {
+                                                                return true;
+                                                        }
+
+                                                        if (bookedDates.length && bookedDates.indexOf(value) !== -1) {
+                                                                return true;
+                                                        }
+
+                                                        if (allowedDates.length && allowedDates.indexOf(value) === -1) {
+                                                                return true;
+                                                        }
+
+                                                        return !!(dynamicMinimum && dateObject && dateObject.getTime() < dynamicMinimum.getTime());
+                                                }
+                                        },
+                                        plugins: ['AmpPlugin', 'LockPlugin'],
+                                        setup: function (calendar) {
+                                                calendar.on('show', function () {
+                                                        if ($(window).width() <= 768) {
+                                                                $('#scrollUp').hide();
+                                                        }
+                                                        calendar.currentInput = $input;
+                                                        calendar.calendarWrapper = $input.next('.easepick-wrapper');
+                                                        calendar.renderAll();
+                                                });
+                                                calendar.on('hide', function () {
+                                                        if ($(window).width() <= 768) {
+                                                                $('#scrollUp').show();
+                                                        }
+                                                });
+                                                calendar.on('click', function (event) {
+                                                        if (event.target.classList.contains('reset-button')) {
+                                                                $input.val('').attr('value', '').attr('data-date', '');
+                                                                calendar.clear();
+                                                                $input.trigger('input').trigger('change');
+                                                        }
+                                                });
+                                                calendar.on('select', function (event) {
+                                                        var date = event.detail && event.detail.date ? event.detail.date : null;
+                                                        var value = date && typeof date.format === 'function' ? date.format(format) : '';
+
+                                                        if (!value) {
+                                                                return;
+                                                        }
+
+                                                        $input
+                                                                .val(value)
+                                                                .attr('value', value)
+                                                                .attr('data-date', value)
+                                                                .trigger('input')
+                                                                .trigger('change');
+                                                });
+                                        }
+                                });
+
+                                $input
+                                        .data('hr-uniform-booking-easepick', picker)
+                                        .data('hr-uniform-booking-calendar-bound', 'easepick');
+
+                                if ('self-drive' === moduleName) {
+                                        $input
+                                                .data('hr-self-drive-easepick', picker)
+                                                .data('hr-self-drive-datepicker-bound', 'easepick');
+                                }
+
+                                if ('van-rental' === moduleName) {
+                                        $input.data('hr-pickup-dropoff-datepicker-bound', 'easepick');
+                                }
+
+                                if ('seaport-transfer' === moduleName) {
+                                        $input.data('hr-port-transfer-datepicker-bound', 'easepick');
+                                }
+                        } catch (error) {
+                                initUniformBookingCalendarFallback($form, $input, options, resolvedContextMinimum);
+                        }
+                });
+        }
+
+        function adoptDayTourCalendarForModule($form, moduleName) {
+                var $input;
+
+                if (!isUniformBookingCalendarModule($form, moduleName)) {
+                        return;
+                }
+
+                $input = 'self-drive' === moduleName ? findSelfDriveRentalDateInput($form) : findBookingDateInput($form, PACKAGE_START_DATE_INPUT_SELECTOR);
+
+                if (!$input.length) {
+                        return;
+                }
+
+                $input
+                        .attr('data-hr-calendar-module', moduleName)
+                        .addClass('hr-uniform-booking-datepicker hr-uniform-booking-datepicker-source');
+
+                if (!$input.hasClass('ovabrw-datepicker')) {
+                        initUniformBookingCalendar($form, $input, moduleName);
+                }
         }
 
         function setPackageStartDateRangeField($startInput, startDate, endDate) {
@@ -1874,6 +2321,8 @@
                                 return this.nodeType === 3;
                         }).first().replaceWith(labelText + ' ');
                 }
+
+                adoptDayTourCalendarForModule($form, 'boat-rental');
         }
 
         function getBoatNativeMinDate() {
@@ -2410,7 +2859,7 @@
 
                 html += '<div class="hr-destination-tour-field-group hr-destination-tour-date-field">';
                 html += '<label for="' + dateId + '">' + escapeHtml(window.hrBooking ? window.hrBooking.destinationTourRentalDateLabel : 'Rental Date') + ' <span class="required">*</span></label>';
-                html += '<input type="text" id="' + dateId + '" class="hr-destination-tour-date-input checkout-date ovabrw-datepicker ovabrw-input-required" name="hr_destination_tour_rental_date_display" placeholder="DD-MM-YYYY" required aria-required="true" autocomplete="off">';
+                html += '<input type="text" id="' + dateId + '" class="hr-destination-tour-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required" name="hr_destination_tour_rental_date_display" placeholder="DD-MM-YYYY" required aria-required="true" autocomplete="off">';
                 html += '</div>';
 
                 if (destinationTourData && destinationTourData.tourName) {
@@ -2487,50 +2936,17 @@
         }
 
         function initDestinationTourDateInputs($form) {
-                var $sourceInput = findBookingDateInput($form, PACKAGE_START_DATE_INPUT_SELECTOR);
-                var dateFormat = getDatepickerFormat($sourceInput) || 'dd-mm-yy';
-
                 $form.find('.hr-destination-tour-date-input').each(function () {
                         var $input = $(this);
 
-                        if ($input.data('hr-destination-tour-datepicker-bound')) {
-                                return;
-                        }
-
-                        if (window.flatpickr && !this._flatpickr) {
-                                try {
-                                        window.flatpickr(this, {
-                                                dateFormat: 'd-m-Y',
-                                                minDate: 'today',
-                                                allowInput: true,
-                                                onChange: function () {
-                                                        $input.trigger('input').trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-destination-tour-datepicker-bound', 'flatpickr');
-                                        return;
-                                } catch (error) {
-                                        // Fall through to jQuery UI/native text input.
-                                }
-                        }
-
-                        if ($.fn.datepicker) {
-                                try {
-                                        $input.datepicker({
-                                                dateFormat: dateFormat,
-                                                minDate: 0,
-                                                onSelect: function () {
-                                                        $(this).trigger('input').trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-destination-tour-datepicker-bound', 'jquery-ui');
-                                } catch (error) {
-                                        bindDestinationTourFallbackDateCalendar($form, $input);
-                                }
-                        } else {
-                                bindDestinationTourFallbackDateCalendar($form, $input);
-                        }
+                        $input
+                                .off('.hrDestinationTourCalendar')
+                                .removeClass('ovabrw-datepicker')
+                                .removeData('hr-destination-tour-datepicker-bound');
+                        initUniformBookingCalendar($form, $input, 'destination-tour');
                 });
+
+                hideDestinationTourFallbackDateCalendar();
         }
 
         function hideDestinationTourFallbackDateCalendar() {
@@ -3346,50 +3762,12 @@
         }
 
         function initPortTransferDateInputs($form) {
-                var $sourceInput = findBookingDateInput($form, PACKAGE_START_DATE_INPUT_SELECTOR);
-                var dateFormat = getDatepickerFormat($sourceInput) || 'dd-mm-yy';
+                var $arrivalInput = $form.find('.hr-port-transfer-date-input').first();
+                var $returnInput = $form.find('.hr-port-transfer-return-date-input').first();
 
-                $form.find('.hr-port-transfer-date-input, .hr-port-transfer-return-date-input').each(function () {
-                        var $input = $(this);
-
-                        if ($input.data('hr-port-transfer-datepicker-bound')) {
-                                return;
-                        }
-
-                        if (String($input.attr('type') || '').toLowerCase() === 'date') {
-                                $input.data('hr-port-transfer-datepicker-bound', 'native-date');
-                                return;
-                        }
-
-                        if (window.flatpickr && !this._flatpickr) {
-                                try {
-                                        window.flatpickr(this, {
-                                                dateFormat: 'd-m-Y',
-                                                allowInput: true,
-                                                onChange: function () {
-                                                        $input.trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-port-transfer-datepicker-bound', 'flatpickr');
-                                        return;
-                                } catch (error) {
-                                        // Fall through to jQuery UI/native text input.
-                                }
-                        }
-
-                        if ($.fn.datepicker) {
-                                try {
-                                        $input.datepicker({
-                                                dateFormat: dateFormat,
-                                                onSelect: function () {
-                                                        $(this).trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-port-transfer-datepicker-bound', 'jquery-ui');
-                                } catch (error) {
-                                        $input.data('hr-port-transfer-datepicker-bound', 'none');
-                                }
-                        }
+                initUniformBookingCalendar($form, $arrivalInput, 'seaport-transfer');
+                initUniformBookingCalendar($form, $returnInput, 'seaport-transfer', function () {
+                        return String($arrivalInput.val() || '');
                 });
         }
 
@@ -4088,8 +4466,20 @@
         }
 
         function showPickupDropoffDatePicker($form, $input) {
+                var uniformPicker;
+
                 if (!$input || !$input.length) {
                         return;
+                }
+
+                uniformPicker = $input.data('hr-uniform-booking-easepick');
+                if (uniformPicker && typeof uniformPicker.show === 'function') {
+                        try {
+                                uniformPicker.show();
+                                return;
+                        } catch (error) {
+                                // Fall through to another available picker.
+                        }
                 }
 
                 if ($input[0]._flatpickr) {
@@ -4145,64 +4535,12 @@
         }
 
         function initPickupDropoffDateInputs($form) {
-                var $sourceInput = findBookingDateInput($form, PACKAGE_START_DATE_INPUT_SELECTOR);
-                var dateFormat = getDatepickerFormat($sourceInput) || 'dd-mm-yy';
-
                 $form.find('.hr-pickup-dropoff-date-input').each(function () {
                         var $input = $(this);
 
                         $input.attr('min', getPickupDropoffNativeMinDate());
                         bindPickupDropoffDatePickerOpen($form, $input);
-
-                        if ($input.data('hr-pickup-dropoff-datepicker-bound')) {
-                                return;
-                        }
-
-                        if (this._flatpickr) {
-                                try {
-                                        this._flatpickr.set('minDate', 'today');
-                                } catch (error) {
-                                        // Existing picker did not accept the option.
-                                }
-                                $input.data('hr-pickup-dropoff-datepicker-bound', 'flatpickr-existing');
-                                return;
-                        }
-
-                        if (window.flatpickr) {
-                                try {
-                                        window.flatpickr(this, {
-                                                dateFormat: 'd-m-Y',
-                                                minDate: 'today',
-                                                allowInput: true,
-                                                onChange: function () {
-                                                        $input.trigger('input').trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-pickup-dropoff-datepicker-bound', 'flatpickr');
-                                        return;
-                                } catch (error) {
-                                        // Fall through to jQuery UI/native text input.
-                                }
-                        }
-
-                        if ($.fn.datepicker) {
-                                try {
-                                        $input.datepicker({
-                                                dateFormat: dateFormat,
-                                                minDate: 0,
-                                                onSelect: function () {
-                                                        $(this).trigger('input').trigger('change');
-                                                }
-                                        });
-                                        $input.data('hr-pickup-dropoff-datepicker-bound', 'jquery-ui');
-                                        return;
-                                } catch (error) {
-                                        bindPickupDropoffFallbackDateCalendar($form, $input);
-                                        return;
-                                }
-                        }
-
-                        bindPickupDropoffFallbackDateCalendar($form, $input);
+                        initUniformBookingCalendar($form, $input, 'van-rental');
                 });
         }
 
@@ -4780,6 +5118,8 @@
                                 return this.nodeType === 3;
                         }).first().replaceWith(labelText + ' ');
                 }
+
+                adoptDayTourCalendarForModule($form, 'motorbike-rental');
         }
 
         function hideMotorbikeGuestFields($form) {
@@ -5253,6 +5593,8 @@
                                 return this.nodeType === 3;
                         }).first().replaceWith(labelText + ' ');
                 }
+
+                adoptDayTourCalendarForModule($form, 'self-drive');
         }
 
         function getSelfDriveReturnDateInput($form) {
@@ -5347,7 +5689,7 @@
                         .attr('id', inputId)
                         .attr('placeholder', placeholder)
                         .attr('autocomplete', 'off')
-                        .addClass('hr-self-drive-return-date-input checkout-date ovabrw-datepicker ovabrw-input-required')
+                        .addClass('hr-self-drive-return-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required')
                         .prop('required', true)
                         .prop('disabled', false)
                         .prop('hidden', false)
@@ -5901,6 +6243,24 @@
                         }, true);
                 }
 
+                if (picker) {
+                        if (typeof picker.show === 'function') {
+                                recordAttempt('easepick.show', function () {
+                                        picker.show();
+                                });
+                        } else if (picker.ui && typeof picker.ui.show === 'function') {
+                                recordAttempt('easepick.ui.show', function () {
+                                        picker.ui.show();
+                                });
+                        }
+
+                        if (attempts.length && attempts[0].ok) {
+                                return getSelfDriveDatePickerDebugSnapshot($form, $returnInput, reason, event, {
+                                        attempts: attempts
+                                }, false);
+                        }
+                }
+
                 recordAttempt('hr-fallback-calendar.show', function () {
                         showSelfDriveFallbackReturnDateCalendar($form, $returnInput);
                 });
@@ -6111,7 +6471,7 @@
                         $returnInput = $('<input>', {
                                 type: 'text',
                                 id: returnId,
-                                class: 'hr-self-drive-return-date-input checkout-date ovabrw-datepicker ovabrw-input-required',
+                                class: 'hr-self-drive-return-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required',
                                 name: 'hr_self_drive_return_date_display',
                                 placeholder: placeholder,
                                 required: true,
@@ -6173,6 +6533,14 @@
         }
 
         function initSelfDriveReturnDatePicker($returnInput, $dateInput) {
+                var $form = $returnInput.closest('form');
+
+                initUniformBookingCalendar($form, $returnInput, 'self-drive', function () {
+                        return $dateInput && $dateInput.length ? String($dateInput.val() || '') : '';
+                });
+        }
+
+        function initSelfDriveReturnDatePickerLegacy($returnInput, $dateInput) {
                 var dateFormat;
                 var dateTimeFormat = 'd-m-Y';
                 var nativeDateSupported;
@@ -6182,7 +6550,7 @@
                 }
 
                 $returnInput
-                        .addClass('checkout-date ovabrw-datepicker')
+                        .addClass('checkout-date hr-uniform-booking-datepicker')
                         .attr('autocomplete', 'off');
 
                 if (!$returnInput.data('hr-self-drive-datepicker-bound')) {

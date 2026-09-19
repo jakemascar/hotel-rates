@@ -254,6 +254,32 @@
 .hr-actions-col { width: 100px; white-space: nowrap; text-align: center; }
 .hr-no-rates { color: #8c8f94; font-style: italic; margin: 0 0 10px; }
 
+/* Keep long Day Tour names inside their own column. */
+.hr-tour-rate-display[data-type='Day Tour'] {
+        min-width: 1450px;
+        table-layout: auto;
+}
+
+.hr-tour-rate-display[data-type='Day Tour'] th.hr-col-meal,
+.hr-tour-rate-display[data-type='Day Tour'] td.hr-col-meal {
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.4;
+}
+
+.hr-tour-rate-display[data-type='Day Tour'] .hr-col-pax {
+        min-width: 115px;
+        white-space: nowrap;
+}
+
+.hr-tour-rate-display[data-type='Day Tour'] .hr-actions-col {
+        min-width: 100px;
+}
+
 .hr-motorbike-admin-models,
 .hr-boat-admin-rates,
 .hr-self-drive-admin-vehicles,
