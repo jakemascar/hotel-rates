@@ -435,9 +435,6 @@ class Hotel_Rates_Booking {
                         if ( 'Airport Transfer' === $tour_data['type'] ) {
                                 ?>
                                 <div class="rental_item hr-airport-transfer-booking-field" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-airport-transfer='<?php echo esc_attr( $tour_json ); ?>'>
-                                        <label>
-                                                <?php echo esc_html( $tour_data['tourName'] ); ?>
-                                        </label>
                                         <p class="hr-booking-rate-help">
                                                 <?php
                                                 printf(
@@ -529,9 +526,6 @@ class Hotel_Rates_Booking {
                         $motorbike_json = wp_json_encode( $motorbike_data );
                         ?>
                         <div class="rental_item hr-motorbike-booking-field" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-motorbike='<?php echo esc_attr( $motorbike_json ); ?>'>
-                                <label>
-                                        <?php echo esc_html( $motorbike_data['rentalName'] ); ?>
-                                </label>
                                 <div class="hr-motorbike-model-selectors"></div>
                                 <p class="hr-motorbike-booking-total"></p>
 
@@ -554,9 +548,6 @@ class Hotel_Rates_Booking {
                         $boat_json = wp_json_encode( $boat_data );
                         ?>
                         <div class="rental_item hr-boat-booking-field" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-boat='<?php echo esc_attr( $boat_json ); ?>'>
-                                <label>
-                                        <?php echo esc_html( $boat_data['rentalName'] ); ?>
-                                </label>
                                 <div class="hr-boat-selectors"></div>
                                 <p class="hr-boat-booking-total"></p>
 
@@ -633,9 +624,6 @@ class Hotel_Rates_Booking {
                                                 >
                                         </div>
                                 </div>
-                                <label>
-                                        <?php echo esc_html( $self_drive_data['rentalName'] ); ?>
-                                </label>
                                 <div class="hr-self-drive-vehicle-selectors"></div>
                                 <p class="hr-self-drive-booking-total"></p>
 
@@ -680,10 +668,6 @@ class Hotel_Rates_Booking {
                                                         aria-required="true"
                                                         autocomplete="off"
                                                 >
-                                        </div>
-
-                                        <div class="hr-destination-tour-service-name">
-                                                <?php echo esc_html( $destination_tour_data['tourName'] ); ?>
                                         </div>
 
                                         <div class="hr-destination-tour-guest-row">
@@ -957,9 +941,6 @@ class Hotel_Rates_Booking {
                         $port_transfer_json = wp_json_encode( $port_transfer_data );
                         ?>
                         <div class="rental_item hr-port-transfer-booking-field" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-port-transfer='<?php echo esc_attr( $port_transfer_json ); ?>'>
-                                <label>
-                                        <?php echo esc_html( $port_transfer_data['transferName'] ); ?>
-                                </label>
                                 <div class="hr-port-transfer-selectors"></div>
                                 <p class="hr-port-transfer-booking-total"></p>
 

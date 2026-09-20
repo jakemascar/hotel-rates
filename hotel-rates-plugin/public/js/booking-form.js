@@ -3042,10 +3042,6 @@
                 html += '<input type="text" id="' + dateId + '" class="hr-destination-tour-date-input checkout-date hr-uniform-booking-datepicker ovabrw-input-required" name="hr_destination_tour_rental_date_display" placeholder="DD-MM-YYYY" required aria-required="true" autocomplete="off">';
                 html += '</div>';
 
-                if (destinationTourData && destinationTourData.tourName) {
-                        html += '<div class="hr-destination-tour-service-name">' + escapeHtml(destinationTourData.tourName) + '</div>';
-                }
-
                 html += '<div class="hr-destination-tour-guest-row">';
                 html += '<label class="hr-destination-tour-guest-label" for="' + guestId + '">' + escapeHtml(window.hrBooking ? window.hrBooking.destinationTourGuestsLabel : 'No. of Guest') + '</label>';
                 html += '<button type="button" class="hr-destination-tour-qty-btn hr-destination-tour-guest-minus" aria-label="Decrease guests">-</button>';
@@ -7974,7 +7970,7 @@
                 var $field = $form.find('.hr-airport-transfer-booking-field');
                 var $wrap = $field.find('.hr-airport-transfer-route-selectors');
                 var routes = transferData && $.isArray(transferData.transferRoutes) ? transferData.transferRoutes : [];
-                var placeholder = transferData && transferData.tourName ? 'To/From ' + transferData.tourName + ':' : 'Select a From/To place';
+                var placeholder = 'Select a From/To place';
                 var directionPlaceholder = window.hrBooking ? window.hrBooking.airportTransferDirectionPlaceholder : 'Select transfer direction:';
                 var airportToPlaceLabel = window.hrBooking ? window.hrBooking.airportTransferDirectionAirportToPlace : 'Airport to From/To Place';
                 var placeToAirportLabel = window.hrBooking ? window.hrBooking.airportTransferDirectionPlaceToAirport : 'From/To Place to Airport';
