@@ -404,9 +404,6 @@ class Hotel_Rates_Booking {
                         $package_json = wp_json_encode( $package_data );
                         ?>
                         <div class="rental_item hr-package-booking-field" data-booking-module="package-deal" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-package='<?php echo esc_attr( $package_json ); ?>'>
-                                <label>
-                                        <?php echo esc_html( $package_data['packageName'] ); ?>
-                                </label>
                                 <p class="hr-booking-rate-help">
                                         <?php
                                         printf(

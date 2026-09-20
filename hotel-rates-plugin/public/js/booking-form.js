@@ -41,6 +41,8 @@
         var packageCalendarRangeActiveForm = null;
         var packageCalendarRangeDocumentHooksBound = false;
         var uniformBookingCalendarOptionsRequests = {};
+        var bookingStickyLayoutFrame = null;
+        var bookingStickyResizeObserver = null;
 
         installSafeClosestPolyfill();
 
@@ -627,6 +629,184 @@
                 }
 
                 return $('.hr-package-booking-field, .hr-tour-booking-field, .hr-airport-transfer-booking-field, .hr-motorbike-booking-field, .hr-boat-booking-field, .hr-self-drive-booking-field, .hr-destination-tour-booking-field, .hr-pickup-dropoff-booking-field, .hr-port-transfer-booking-field, .hr-booking-rate-field').closest('form');
+        }
+
+        function getBookingStickyHeaderOffset() {
+                var bottom = 0;
+
+                $('#wpadminbar, .header_sticky.active_sticky, .elementor-sticky--active').each(function () {
+                        var rect = this.getBoundingClientRect();
+                        var position = window.getComputedStyle(this).position;
+
+                        if ((position === 'fixed' || position === 'sticky') && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight) {
+                                bottom = Math.max(bottom, rect.bottom);
+                        }
+                });
+
+                return Math.max(16, Math.ceil(bottom) + 16);
+        }
+
+        function restoreBookingStickyCard($card) {
+                var $placeholder = $card.data('hrBookingStickyPlaceholder');
+
+                if ($card.hasClass('hr-booking-sticky-target--active') && $placeholder && $placeholder.length) {
+                        $placeholder.after($card);
+                }
+
+                $card
+                        .removeClass('hr-booking-sticky-target--active')
+                        .css({
+                                '--hr-booking-sticky-left': '',
+                                '--hr-booking-sticky-width': '',
+                                '--hr-booking-sticky-top': '',
+                                '--hr-booking-sticky-max-height': '',
+                                '--hr-booking-sticky-background': ''
+                        });
+
+                if ($placeholder && $placeholder.length) {
+                        $placeholder
+                                .removeClass('hr-booking-sticky-placeholder--active')
+                                .css({ height: '', width: '' });
+                }
+        }
+
+        function syncBookingStickyLayout() {
+                var desktop = window.matchMedia('(min-width: 1025px)').matches;
+                var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+                var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+                var topOffset = getBookingStickyHeaderOffset();
+
+                $('.hr-booking-sticky-target').each(function () {
+                        var $card = $(this);
+                        var $placeholder = $card.data('hrBookingStickyPlaceholder');
+                        var $panel = $card.children('.forms-wrapper').first();
+                        var active = $card.hasClass('hr-booking-sticky-target--active');
+                        var visualElement = $panel.length ? $panel[0] : this;
+                        var visualRect;
+                        var placeholderRect;
+                        var start;
+                        var maxHeight;
+                        var backgroundColor;
+
+                        if (!desktop) {
+                                restoreBookingStickyCard($card);
+                                return;
+                        }
+
+                        if (!active) {
+                                visualRect = visualElement.getBoundingClientRect();
+
+                                if (visualRect.width < 1 || visualRect.height < 1) {
+                                        return;
+                                }
+
+                                start = scrollTop + visualRect.top;
+                                $card.data('hrBookingStickyStart', start);
+                        } else {
+                                start = parseFloat($card.data('hrBookingStickyStart')) || 0;
+                        }
+
+                        if (scrollTop + topOffset < start) {
+                                restoreBookingStickyCard($card);
+                                return;
+                        }
+
+                        maxHeight = Math.max(240, viewportHeight - topOffset - 16);
+
+                        if (!active) {
+                                visualRect = visualElement.getBoundingClientRect();
+                                backgroundColor = window.getComputedStyle(visualElement).backgroundColor;
+
+                                if ($placeholder && $placeholder.length) {
+                                        $placeholder
+                                                .addClass('hr-booking-sticky-placeholder--active')
+                                                .css({
+                                                        height: Math.ceil($card.outerHeight(true)) + 'px',
+                                                        width: '100%'
+                                                });
+                                }
+
+                                $card
+                                        .addClass('hr-booking-sticky-target--active')
+                                        .css({
+                                                '--hr-booking-sticky-left': Math.round(visualRect.left) + 'px',
+                                                '--hr-booking-sticky-width': Math.round(visualRect.width) + 'px',
+                                                '--hr-booking-sticky-background': backgroundColor
+                                        })
+                                        .appendTo('body');
+                        } else if ($placeholder && $placeholder.length) {
+                                placeholderRect = $placeholder[0].getBoundingClientRect();
+
+                                if (placeholderRect.width > 0) {
+                                        $card.css({
+                                                '--hr-booking-sticky-left': Math.round(placeholderRect.left) + 'px',
+                                                '--hr-booking-sticky-width': Math.round(placeholderRect.width) + 'px'
+                                        });
+                                }
+                        }
+
+                        $card.css({
+                                '--hr-booking-sticky-top': Math.round(topOffset) + 'px',
+                                '--hr-booking-sticky-max-height': Math.round(maxHeight) + 'px'
+                        });
+                });
+        }
+
+        function scheduleBookingStickyLayout() {
+                if (bookingStickyLayoutFrame !== null) {
+                        return;
+                }
+
+                bookingStickyLayoutFrame = window.requestAnimationFrame(function () {
+                        bookingStickyLayoutFrame = null;
+                        syncBookingStickyLayout();
+                });
+        }
+
+        function initBookingStickyForms($forms) {
+                var $cards = $();
+
+                $forms.each(function () {
+                        var $card = $(this).closest('.ova-forms-product');
+                        var $placeholder;
+
+                        if (!$card.length || $card.hasClass('hr-booking-sticky-target')) {
+                                return;
+                        }
+
+                        $placeholder = $('<div></div>')
+                                .addClass('hr-booking-sticky-placeholder')
+                                .attr('aria-hidden', 'true');
+
+                        $card.before($placeholder);
+                        $card
+                                .addClass('hr-booking-sticky-target')
+                                .data('hrBookingStickyPlaceholder', $placeholder);
+                        $cards = $cards.add($card);
+                });
+
+                if (!$cards.length) {
+                        return;
+                }
+
+                $(window)
+                        .off('.hrBookingSticky')
+                        .on('scroll.hrBookingSticky resize.hrBookingSticky orientationchange.hrBookingSticky', scheduleBookingStickyLayout);
+
+                if (window.ResizeObserver) {
+                        if (bookingStickyResizeObserver) {
+                                bookingStickyResizeObserver.disconnect();
+                        }
+
+                        bookingStickyResizeObserver = new window.ResizeObserver(scheduleBookingStickyLayout);
+                        $cards.each(function () {
+                                bookingStickyResizeObserver.observe(this);
+                        });
+                }
+
+                [0, 100, 350, 800].forEach(function (delay) {
+                        window.setTimeout(scheduleBookingStickyLayout, delay);
+                });
         }
 
         function getGuestCount($form) {
@@ -9841,6 +10021,8 @@
 
                         var sourceRows = getSourceRows();
                         var $forms = getBookingForms();
+
+                        initBookingStickyForms($forms);
 
                         $forms.each(function () {
                         var $form = $(this);
