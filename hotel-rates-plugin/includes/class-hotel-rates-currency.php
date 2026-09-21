@@ -14,6 +14,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Hotel_Rates_Currency {
 
 	/**
+	 * Number of active Tripgo archive-card render scopes.
+	 *
+	 * @var int
+	 */
+	private static $tripgo_archive_scope_depth = 0;
+
+	/**
+	 * Prevent recursive formatting if YayCurrency calls wc_price() internally.
+	 *
+	 * @var bool
+	 */
+	private static $formatting_tripgo_archive_price = false;
+
+	/**
 	 * Determine whether the public YayCurrency conversion API is available.
 	 *
 	 * @return bool
@@ -97,6 +111,78 @@ class Hotel_Rates_Currency {
 		}
 
 		return self::format_php_fallback( $raw_php_price );
+	}
+
+	/**
+	 * Begin display-only conversion while a Tripgo archive card is rendered.
+	 *
+	 * The child-theme compatibility templates bracket the original Tripgo
+	 * template with this scope. Product values remain raw PHP amounts; only the
+	 * HTML returned by wc_price() inside that template is replaced.
+	 *
+	 * @return void
+	 */
+	public static function begin_tripgo_archive_price_scope() {
+		self::$tripgo_archive_scope_depth++;
+
+		if ( 1 === self::$tripgo_archive_scope_depth ) {
+			add_filter( 'wc_price', array( __CLASS__, 'filter_tripgo_archive_price_html' ), PHP_INT_MAX, 5 );
+		}
+	}
+
+	/**
+	 * End display-only conversion after a Tripgo archive card is rendered.
+	 *
+	 * @return void
+	 */
+	public static function end_tripgo_archive_price_scope() {
+		if ( self::$tripgo_archive_scope_depth > 0 ) {
+			self::$tripgo_archive_scope_depth--;
+		}
+
+		if ( 0 === self::$tripgo_archive_scope_depth ) {
+			remove_filter( 'wc_price', array( __CLASS__, 'filter_tripgo_archive_price_html' ), PHP_INT_MAX );
+		}
+	}
+
+	/**
+	 * Convert wc_price() output only inside a Tripgo archive-card scope.
+	 *
+	 * @param string           $formatted_price   Existing WooCommerce price HTML.
+	 * @param float            $price             Filtered price value.
+	 * @param array            $args              wc_price() arguments.
+	 * @param float            $unformatted_price Numeric price before formatting.
+	 * @param int|float|string $original_price    Original value passed to wc_price().
+	 * @return string
+	 */
+	public static function filter_tripgo_archive_price_html( $formatted_price, $price, $args = array(), $unformatted_price = null, $original_price = null ) {
+		unset( $args );
+
+		if ( self::$formatting_tripgo_archive_price || self::$tripgo_archive_scope_depth < 1 ) {
+			return $formatted_price;
+		}
+
+		$raw_price = is_numeric( $original_price ) ? $original_price : $unformatted_price;
+
+		if ( ! is_numeric( $raw_price ) ) {
+			$raw_price = $price;
+		}
+
+		if ( ! is_numeric( $raw_price ) ) {
+			return $formatted_price;
+		}
+
+		self::$formatting_tripgo_archive_price = true;
+
+		try {
+			$display_price = self::format_display_price( $raw_price );
+		} catch ( \Throwable $error ) {
+			$display_price = $formatted_price;
+		}
+
+		self::$formatting_tripgo_archive_price = false;
+
+		return is_string( $display_price ) && '' !== $display_price ? $display_price : $formatted_price;
 	}
 
 	/**
