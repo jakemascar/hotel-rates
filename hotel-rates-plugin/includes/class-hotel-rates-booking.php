@@ -245,8 +245,16 @@ class Hotel_Rates_Booking {
                         true
                 );
 
+                $display_currency = Hotel_Rates_Currency::get_frontend_display_data();
+
                 wp_localize_script( 'hr-booking', 'hrBooking', array(
-                        'currencySymbol'    => function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, get_bloginfo( 'charset' ) ) : '',
+                        'currencySymbol'             => $display_currency['symbol'],
+                        'displayConversionAvailable' => $display_currency['conversionAvailable'],
+                        'displayCurrency'            => $display_currency['currency'],
+                        'displayCurrencySymbol'      => $display_currency['symbol'],
+                        'displayRate'                => $display_currency['rate'],
+                        'displayFee'                 => $display_currency['fee'],
+                        'displayFormatting'          => $display_currency['formatting'],
                         'locale'            => str_replace( '_', '-', get_locale() ),
                         'version'           => HR_VERSION,
                         'ajaxUrl'           => admin_url( 'admin-ajax.php' ),

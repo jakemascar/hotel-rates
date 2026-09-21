@@ -173,7 +173,7 @@ class Hotel_Rates_Shortcodes {
                                                         $col = 'pax_' . $p;
                                                         $val = $row->$col;
                                                 ?>
-                                                <td class="hr-sc-price"><?php echo $val !== null ? '&#8369;' . number_format( (float) $val, 0 ) : '&mdash;'; ?></td>
+                                                <td class="hr-sc-price"><?php echo null !== $val ? wp_kses_post( Hotel_Rates_Currency::format_display_price( $val ) ) : '&mdash;'; ?></td>
                                                 <?php endfor; ?>
                                         </tr>
                                         <?php endforeach; ?>
@@ -408,7 +408,7 @@ class Hotel_Rates_Shortcodes {
                                                         $col = 'pax_' . $p;
                                                         $val = $row->$col;
                                                 ?>
-                                                <td class="hr-sc-price"><?php echo $val !== null ? '&#8369;' . number_format( (float) $val, 0 ) : '&mdash;'; ?></td>
+                                                <td class="hr-sc-price"><?php echo null !== $val ? wp_kses_post( Hotel_Rates_Currency::format_display_price( $val ) ) : '&mdash;'; ?></td>
                                                 <?php endfor; ?>
                                         </tr>
                                         <?php endforeach; ?>
@@ -506,7 +506,7 @@ class Hotel_Rates_Shortcodes {
                                                                 ?>
                                                         <tr>
                                                                 <td class="hr-specific-tour-rate-pax"><?php echo esc_html( $pax ); ?></td>
-                                                                <td class="hr-specific-tour-rate-price"><?php echo null === $value ? '&mdash;' : '&#8369; ' . esc_html( number_format_i18n( (float) $value, 0 ) ); ?></td>
+                                                                <td class="hr-specific-tour-rate-price"><?php echo null === $value ? '&mdash;' : wp_kses_post( Hotel_Rates_Currency::format_display_price( $value ) ); ?></td>
                                                                 <?php if ( 1 === $pax ) : ?>
                                                                         <td class="hr-specific-tour-package-details" rowspan="<?php echo esc_attr( $max_pax ); ?>">
                                                                                 <?php if ( ! empty( $package_details ) ) : ?>
@@ -689,13 +689,7 @@ class Hotel_Rates_Shortcodes {
         }
 
         private function format_package_rate_price( $value ) {
-                $value = (float) $value;
-
-                if ( function_exists( 'wc_price' ) ) {
-                        return wc_price( $value );
-                }
-
-                return '&#8369;' . number_format_i18n( $value, 2 );
+                return Hotel_Rates_Currency::format_display_price( $value );
         }
 
         /**

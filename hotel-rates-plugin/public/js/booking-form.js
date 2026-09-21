@@ -818,18 +818,118 @@
                 return total;
         }
 
-        function formatPrice(amount) {
-                var locale = (window.hrBooking && window.hrBooking.locale) ? window.hrBooking.locale : undefined;
+        function formatPhpDisplayPrice(amount) {
+                var locale = window.hrBooking && window.hrBooking.locale ? window.hrBooking.locale : undefined;
+
+                return '₱' + amount.toLocaleString(locale, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                });
+        }
+
+        function roundDisplayAmount(amount, formatting) {
+                var roundingType = String(formatting.roundingType || 'disabled');
+                var roundingValue = Number(formatting.roundingValue || 1);
+                var subtractAmount = Number(formatting.subtractAmount || 0);
+
+                if (!Number.isFinite(roundingValue) || roundingValue <= 0 || 'disabled' === roundingType) {
+                        return amount;
+                }
+
+                if (!Number.isFinite(subtractAmount)) {
+                        subtractAmount = 0;
+                }
+
+                switch (roundingType) {
+                        case 'up':
+                                return (Math.ceil(amount / roundingValue) * roundingValue) - subtractAmount;
+                        case 'down':
+                                return (Math.floor(amount / roundingValue) * roundingValue) - subtractAmount;
+                        case 'nearest':
+                                return (Math.round(amount / roundingValue) * roundingValue) - subtractAmount;
+                        default:
+                                return amount;
+                }
+        }
+
+        function formatDisplayAmountFromMetadata(rawAmount) {
+                var bookingData = window.hrBooking || {};
+                var formatting = bookingData.displayFormatting || {};
+                var rate = Number(bookingData.displayRate);
+                var decimals = Number(formatting.numberDecimal);
+                var displayAmount;
+                var parts;
+                var formattedAmount;
+                var symbol = String(bookingData.displayCurrencySymbol || '₱');
+                var position = String(formatting.currencyPosition || 'left');
+                var decimalSeparator = typeof formatting.decimalSeparator === 'string' ? formatting.decimalSeparator : '.';
+                var thousandSeparator = typeof formatting.thousandSeparator === 'string' ? formatting.thousandSeparator : ',';
+
+                if (!bookingData.displayConversionAvailable || !Number.isFinite(rate) || rate <= 0) {
+                        return formatPhpDisplayPrice(rawAmount);
+                }
+
+                if (!Number.isFinite(decimals) || decimals < 0) {
+                        decimals = 0;
+                }
+
+                decimals = Math.floor(decimals);
+                displayAmount = roundDisplayAmount(rawAmount * rate, formatting);
+                parts = displayAmount.toFixed(decimals).split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+                formattedAmount = parts.join(decimalSeparator);
+
+                switch (position) {
+                        case 'right':
+                                return formattedAmount + symbol;
+                        case 'left_space':
+                                return symbol + ' ' + formattedAmount;
+                        case 'right_space':
+                                return formattedAmount + ' ' + symbol;
+                        case 'left':
+                        default:
+                                return symbol + formattedAmount;
+                }
+        }
+
+        /**
+         * Format a copy of a raw PHP amount for display only.
+         *
+         * The returned string must never be written to a hidden pricing field.
+         */
+        function formatDisplayPrice(amount) {
                 var number = Number(amount);
+                var bookingData = window.hrBooking || {};
+                var yayHelper;
+                var formatted;
 
                 if (!Number.isFinite(number)) {
                         return '';
                 }
 
-                return (window.hrBooking ? window.hrBooking.currencySymbol : '') + number.toLocaleString(locale, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                });
+                if (bookingData.displayConversionAvailable) {
+                        yayHelper = window.YayCurrency_Callback && window.YayCurrency_Callback.Helper;
+
+                        if (yayHelper && typeof yayHelper.formatPriceByCurrency === 'function') {
+                                try {
+                                        formatted = yayHelper.formatPriceByCurrency(number, true);
+
+                                        if (typeof formatted === 'string' && formatted.length) {
+                                                return formatted;
+                                        }
+                                } catch (error) {
+                                        // Use the server-provided display metadata below.
+                                }
+                        }
+                }
+
+                return formatDisplayAmountFromMetadata(number);
+        }
+
+        // Existing call sites are display-only; retain this private alias to keep
+        // the currency change isolated from all raw booking calculations.
+        function formatPrice(amount) {
+                return formatDisplayPrice(amount);
         }
 
         function escapeHtml(value) {
