@@ -276,7 +276,7 @@
                         var name = String($control.attr('name') || '');
                         var className = String(control.className || '');
                         var type = String($control.attr('type') || control.tagName || '').toLowerCase();
-                        var watched = $control.is('.ovabrw-input-required, .ovabrw-required, [required], [aria-required="true"], .error, .hr-motorbike-model-qty, .hr-motorbike-start-time-select, .hr-motorbike-days-select, .hr-motorbike-document-input, .hr-motorbike-handover-option, .hr-motorbike-delivery-address') ||
+                        var watched = $control.is('.ovabrw-input-required, .ovabrw-required, [required], [aria-required="true"], .error, .hr-motorbike-model-qty, .hr-motorbike-start-time-select, .hr-motorbike-days-select, .hr-motorbike-handover-option, .hr-motorbike-delivery-address') ||
                                 /(?:ovabrw|motorbike|quantity|add-to-cart|product_id|data_custom_ckf|recaptcha)/i.test(name);
 
                         if (!watched) {
@@ -403,10 +403,6 @@
 
         function getMotorbikeDebugState($form, reason) {
                 var $field = $form.find('.hr-motorbike-booking-field');
-                var documentInput = $field.find('.hr-motorbike-document-input')[0];
-                var files = documentInput && documentInput.files ? $.map(documentInput.files, function (file) {
-                        return file.name;
-                }) : [];
                 var controls = getMotorbikeDebugControls($form);
                 var requiredProblems = getMotorbikeDebugRequiredProblems(controls);
 
@@ -430,7 +426,6 @@
                                 days: $field.find('.hr-motorbike-days-select').val() || '',
                                 handover: $field.find('.hr-motorbike-handover-option:checked').val() || '',
                                 deliveryAddress: $field.find('.hr-motorbike-delivery-address').val() || '',
-                                fileNames: files,
                                 payload: $field.find('input[name="hr_motorbike_selection_payload"]').val() || '',
                                 hiddenTotal: $field.find('input[name="hr_motorbike_total"]').val() || '',
                                 formTotal: $form.find('input[name="hr_motorbike_total"]').last().val() || '',
@@ -5178,7 +5173,7 @@
         function hideMotorbikeAjaxTotal($form) {
                 var $ajaxTotal = $form.find('.ajax-show-total');
 
-                $form.addClass('hr-motorbike-booking-form').attr('enctype', 'multipart/form-data');
+                $form.addClass('hr-motorbike-booking-form');
 
                 $ajaxTotal.each(function () {
                         this.style.setProperty('display', 'none', 'important');
@@ -5255,11 +5250,6 @@
                         html += '<option value="' + escapeHtml(days) + '">' + escapeHtml(days) + '</option>';
                 });
                 html += '</select>';
-                html += '</div>';
-
-                html += '<div class="hr-motorbike-field-group">';
-                html += '<label class="hr-motorbike-document-label">' + escapeHtml(window.hrBooking ? window.hrBooking.motorbikeDocumentLabel : "Drop your Driver's License & Proof Billing:") + '</label>';
-                html += '<input type="file" name="hr_motorbike_document" class="hr-motorbike-document-input ovabrw-input-required" accept=".jpg,.jpeg,.png,.pdf" required aria-required="true">';
                 html += '</div>';
 
                 html += '<div class="hr-motorbike-handover-options">';

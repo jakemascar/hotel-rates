@@ -649,7 +649,6 @@
 .hr-motorbike-start-time-select,
 .hr-motorbike-days-select,
 .hr-motorbike-delivery-address,
-.hr-motorbike-document-input,
 .hr-boat-rate-select,
 .hr-boat-boarding-time-select,
 .hr-self-drive-start-time-select,
@@ -746,7 +745,6 @@
         text-overflow: ellipsis;
 }
 
-.hr-motorbike-document-label,
 .hr-self-drive-return-date-field label,
 .hr-destination-tour-date-field label,
 .hr-pickup-dropoff-date-field label,

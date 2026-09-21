@@ -282,7 +282,6 @@ class Hotel_Rates_Booking {
                         'motorbikeModelsLabel'        => __( 'Select Motorbike Model & Quantity', 'hotel-rates' ),
                         'motorbikeStartTimePlaceholder' => __( 'Pick-up/Delivery Time', 'hotel-rates' ),
                         'motorbikeDaysPlaceholder'    => __( 'No. of Days', 'hotel-rates' ),
-                        'motorbikeDocumentLabel'      => __( "Drop your Driver's License & Proof Billing:", 'hotel-rates' ),
                         'motorbikeHandoverLabel'      => __( 'Motorbike Handover Options:', 'hotel-rates' ),
                         'motorbikePickupLabel'        => __( 'Pick-up', 'hotel-rates' ),
                         'motorbikeDeliveryLabel'      => __( 'Deliver to Address (%s additional charge)', 'hotel-rates' ),
@@ -1044,9 +1043,6 @@ class Hotel_Rates_Booking {
 			}
 
 			if ( 'file' === $type ) {
-				if ( empty( $_FILES[ $key ] ) && ! empty( $_FILES['hr_motorbike_document']['name'] ) ) {
-					$_FILES[ $key ] = $_FILES['hr_motorbike_document'];
-				}
 				continue;
 			}
 
@@ -1197,17 +1193,9 @@ class Hotel_Rates_Booking {
 			return $passed;
                 }
 
-                $selection = $this->get_motorbike_selection_from_request( $product_id, false );
+                $selection = $this->get_motorbike_selection_from_request( $product_id );
 
                 if ( ! $selection ) {
-                        return false;
-                }
-
-                if ( empty( $_FILES['hr_motorbike_document']['name'] ) || ! empty( $_FILES['hr_motorbike_document']['error'] ) ) {
-                        if ( function_exists( 'wc_add_notice' ) ) {
-                                wc_add_notice( __( "Please upload your driver's license or proof of billing.", 'hotel-rates' ), 'error' );
-                        }
-
                         return false;
                 }
 
@@ -2364,7 +2352,7 @@ class Hotel_Rates_Booking {
                         return $cart_item_data;
                 }
 
-                $motorbike_selection = $this->get_motorbike_selection_from_request( $product_id, true );
+                $motorbike_selection = $this->get_motorbike_selection_from_request( $product_id );
                 if ( $motorbike_selection ) {
                         $cart_item_data['hr_motorbike_rental_id']      = $motorbike_selection['rental_id'];
                         $cart_item_data['hr_motorbike_rental_name']    = $motorbike_selection['rental_name'];
@@ -2375,8 +2363,6 @@ class Hotel_Rates_Booking {
                         $cart_item_data['hr_motorbike_handover_label'] = $motorbike_selection['handover_label'];
                         $cart_item_data['hr_motorbike_delivery_address'] = $motorbike_selection['delivery_address'];
                         $cart_item_data['hr_motorbike_delivery_fee']   = $motorbike_selection['delivery_fee'];
-                        $cart_item_data['hr_motorbike_document_url']   = $motorbike_selection['document_url'];
-                        $cart_item_data['hr_motorbike_document_name']  = $motorbike_selection['document_name'];
                         $cart_item_data['hr_motorbike_total']          = $motorbike_selection['total'];
                         $cart_item_data['hr_motorbike_selection_payload'] = $motorbike_selection['payload'];
                         return $cart_item_data;
@@ -2876,15 +2862,6 @@ class Hotel_Rates_Booking {
                                         'key'     => __( 'Delivery Address', 'hotel-rates' ),
                                         'value'   => wc_clean( $cart_item['hr_motorbike_delivery_address'] ),
                                         'display' => '',
-                                );
-                        }
-
-                        if ( ! empty( $cart_item['hr_motorbike_document_url'] ) ) {
-                                $document_name = ! empty( $cart_item['hr_motorbike_document_name'] ) ? $cart_item['hr_motorbike_document_name'] : __( 'Uploaded document', 'hotel-rates' );
-                                $item_data[] = array(
-                                        'key'     => __( "Driver's License / Proof Billing", 'hotel-rates' ),
-                                        'value'   => esc_url_raw( $cart_item['hr_motorbike_document_url'] ),
-                                        'display' => '<a href="' . esc_url( $cart_item['hr_motorbike_document_url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $document_name ) . '</a>',
                                 );
                         }
 
@@ -3434,10 +3411,6 @@ class Hotel_Rates_Booking {
 
                         if ( ! empty( $values['hr_motorbike_delivery_address'] ) ) {
                                 $item->add_meta_data( __( 'Delivery Address', 'hotel-rates' ), $values['hr_motorbike_delivery_address'], true );
-                        }
-
-                        if ( ! empty( $values['hr_motorbike_document_url'] ) ) {
-                                $item->add_meta_data( __( "Driver's License / Proof Billing", 'hotel-rates' ), esc_url_raw( $values['hr_motorbike_document_url'] ), true );
                         }
 
                         $item->add_meta_data( __( 'Motorbike Rental Total', 'hotel-rates' ), wp_strip_all_tags( wc_price( (float) ( $values['hr_motorbike_total'] ?? 0 ) ) ), true );
@@ -5491,7 +5464,7 @@ class Hotel_Rates_Booking {
                         || (bool) preg_match( '/^(?:[01]?\d|2[0-3])$/', $value );
         }
 
-        private function get_motorbike_selection_from_request( $product_id, $process_upload = true ) {
+        private function get_motorbike_selection_from_request( $product_id ) {
                 $rental_id        = isset( $_POST['hr_motorbike_rental_id'] ) ? (int) wp_unslash( $_POST['hr_motorbike_rental_id'] ) : 0;
                 $linked_rental_id = $this->get_linked_product_motorbike_rental_id( $product_id );
 
@@ -5569,19 +5542,6 @@ class Hotel_Rates_Booking {
                 }
 
                 $delivery_fee = 'delivery' === $handover_option ? (float) ( $motorbike_data['deliveryFee'] ?? 0 ) : 0.0;
-                $document = array(
-                        'url'  => '',
-                        'name' => '',
-                );
-
-                if ( $process_upload ) {
-                        $document = $this->handle_motorbike_document_upload();
-
-                        if ( false === $document ) {
-                                return false;
-                        }
-                }
-
                 return array(
                         'rental_id'        => (int) $motorbike_data['rentalId'],
                         'rental_name'      => $motorbike_data['rentalName'],
@@ -5592,43 +5552,8 @@ class Hotel_Rates_Booking {
                         'handover_label'   => 'delivery' === $handover_option ? __( 'Deliver to Address', 'hotel-rates' ) : __( 'Pick-up', 'hotel-rates' ),
                         'delivery_address' => 'delivery' === $handover_option ? $delivery_address : '',
                         'delivery_fee'     => $delivery_fee,
-                        'document_url'     => $document['url'],
-                        'document_name'    => $document['name'],
                         'total'            => $subtotal + $delivery_fee,
                         'payload'          => wp_json_encode( $payload ),
-                );
-        }
-
-        private function handle_motorbike_document_upload() {
-                if ( empty( $_FILES['hr_motorbike_document'] ) || empty( $_FILES['hr_motorbike_document']['name'] ) ) {
-                        $this->add_motorbike_notice( __( "Please upload your driver's license or proof of billing.", 'hotel-rates' ) );
-                        return false;
-                }
-
-                if ( ! empty( $_FILES['hr_motorbike_document']['error'] ) ) {
-                        $this->add_motorbike_notice( __( 'The uploaded motorbike rental document could not be processed.', 'hotel-rates' ) );
-                        return false;
-                }
-
-                require_once ABSPATH . 'wp-admin/includes/file.php';
-
-                $upload = wp_handle_upload( $_FILES['hr_motorbike_document'], array(
-                        'test_form' => false,
-                        'mimes'     => array(
-                                'jpg|jpeg|jpe' => 'image/jpeg',
-                                'png'          => 'image/png',
-                                'pdf'          => 'application/pdf',
-                        ),
-                ) );
-
-                if ( ! empty( $upload['error'] ) ) {
-                        $this->add_motorbike_notice( sanitize_text_field( $upload['error'] ) );
-                        return false;
-                }
-
-                return array(
-                        'url'  => esc_url_raw( $upload['url'] ?? '' ),
-                        'name' => ! empty( $upload['file'] ) ? basename( $upload['file'] ) : __( 'Uploaded document', 'hotel-rates' ),
                 );
         }
 
