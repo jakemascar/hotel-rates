@@ -2820,6 +2820,8 @@ class Hotel_Rates_Booking {
                 }
 
                 if ( ! empty( $cart_item['hr_motorbike_rental_id'] ) ) {
+                        $item_data = $this->cleanup_motorbike_item_data( $item_data );
+
                         $item_data[] = array(
                                 'key'     => __( 'Motorbike Rental', 'hotel-rates' ),
                                 'value'   => wc_clean( $cart_item['hr_motorbike_rental_name'] ?? '' ),
@@ -2881,7 +2883,7 @@ class Hotel_Rates_Booking {
                                 );
                         }
 
-                        return $this->cleanup_motorbike_item_data( $item_data );
+                        return $item_data;
                 }
 
                 if ( ! empty( $cart_item['hr_boat_rental_id'] ) ) {
@@ -3216,6 +3218,11 @@ class Hotel_Rates_Booking {
                         }
 
                         if ( $is_motorbike_rental && $this->should_remove_motorbike_item_data( $key ) ) {
+                                $item->delete_meta_data( $key );
+                                continue;
+                        }
+
+                        if ( $is_motorbike_rental && $this->is_blank_item_data_key( $key ) ) {
                                 $item->delete_meta_data( $key );
                                 continue;
                         }
@@ -4272,7 +4279,11 @@ class Hotel_Rates_Booking {
 
                         $key = isset( $data['key'] ) ? (string) $data['key'] : ( isset( $data['name'] ) ? (string) $data['name'] : '' );
 
-                        if ( $this->should_remove_motorbike_item_data( $key ) ) {
+                        if ( $this->is_blank_item_data_key( $key ) ) {
+                                continue;
+                        }
+
+                        if ( $this->should_remove_motorbike_item_data( $key, true ) ) {
                                 continue;
                         }
 
@@ -4704,7 +4715,7 @@ class Hotel_Rates_Booking {
                 return false;
         }
 
-	private function should_remove_motorbike_item_data( $key ) {
+	private function should_remove_motorbike_item_data( $key, $remove_display_like_keys = false ) {
                 $key_text = strtolower( html_entity_decode( wp_strip_all_tags( (string) $key ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
                 $key_slug = trim( preg_replace( '/[^a-z0-9]+/', '_', $key_text ), '_' );
 
@@ -4771,6 +4782,20 @@ class Hotel_Rates_Booking {
 		}
 
 		if ( false !== strpos( $key_slug, 'delivery_address' ) ) {
+			return true;
+		}
+
+		if ( $remove_display_like_keys && in_array( $key_slug, array(
+			'arrival_time',
+			'motorbike_rental',
+			'motorbike',
+			'pick_up_delivery_time',
+			'pickup_delivery_time',
+			'no_of_days',
+			'handover_option',
+			'delivery_address',
+			'motorbike_rental_total',
+		), true ) ) {
 			return true;
 		}
 
