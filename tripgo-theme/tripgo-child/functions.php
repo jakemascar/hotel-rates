@@ -26,6 +26,26 @@ function tripgo_enqueue_styles() {
     );
 }
 
+/**
+ * Allow visitors to drag the Chaty launcher away from covered content.
+ */
+add_action( 'wp_enqueue_scripts', 'island_diaries_enqueue_chaty_draggable', 100 );
+function island_diaries_enqueue_chaty_draggable() {
+    $script_path = get_stylesheet_directory() . '/assets/js/chaty-draggable.js';
+
+    if ( ! file_exists( $script_path ) ) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'island-diaries-chaty-draggable',
+        get_stylesheet_directory_uri() . '/assets/js/chaty-draggable.js',
+        array(),
+        (string) filemtime( $script_path ),
+        true
+    );
+}
+
 add_filter( 'wp_mail_smtp_core_wp_mail_function_incorrect_location_notice', '__return_false' );
 
 // Export Custom Taxonomy and Custom Checkout Fields
