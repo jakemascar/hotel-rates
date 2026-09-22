@@ -2237,8 +2237,7 @@
         function syncPackageDepositAmountMessage($form) {
                 var $field;
                 var $deposit;
-                var $message;
-                var $controls;
+                var $totalDisplay;
                 var selectedPayment;
                 var total;
                 var valid;
@@ -2261,37 +2260,30 @@
                 }
 
                 $deposit.find('.title-deposit').first().attr('aria-hidden', 'true');
-                $message = $deposit.find('.hr-package-deposit-amount-message').first();
-
-                if (!$message.length) {
-                        $message = $('<p>', {
-                                'class': 'hr-package-deposit-amount-message',
-                                'aria-live': 'polite',
-                                hidden: true
-                        });
-                        $controls = $deposit.find('.ovabrw-type-deposit').first();
-
-                        if ($controls.length) {
-                                $message.insertBefore($controls);
-                        } else {
-                                $deposit.prepend($message);
-                        }
-                }
+                $deposit.find('.hr-package-deposit-amount-message').remove();
+                $totalDisplay = $field.find('.hr-package-booking-total').first();
 
                 selectedPayment = $deposit.find('input[name=ova_type_deposit]:checked').val();
                 total = Number($form.data('hr-package-total') || 0);
                 valid = $form.data('hr-package-total-valid') === true;
 
-                if (selectedPayment !== 'deposit' || !valid || total <= 0 || !Number.isFinite(total)) {
-                        $message.text('').prop('hidden', true);
+                if (!$totalDisplay.length || !valid || total <= 0 || !Number.isFinite(total)) {
                         return;
                 }
 
-                label = window.hrBooking && window.hrBooking.packageDepositAmountLabel
-                        ? window.hrBooking.packageDepositAmountLabel
-                        : 'Pay only %s deposit';
+                if (selectedPayment === 'deposit') {
+                        label = window.hrBooking && window.hrBooking.packageDepositSummaryLabel
+                                ? window.hrBooking.packageDepositSummaryLabel
+                                : 'Deposit: %1$s (of %2$s)';
 
-                $message.text(label.replace('%s', formatPrice(total * 0.5))).prop('hidden', false);
+                        $totalDisplay.text(label.replace('%1$s', formatPrice(total * 0.5)).replace('%2$s', formatPrice(total)));
+                        return;
+                }
+
+                label = window.hrBooking && window.hrBooking.packageTotalLabel
+                        ? window.hrBooking.packageTotalLabel
+                        : 'Package total: %s';
+                $totalDisplay.text(label.replace('%s', formatPrice(total)));
         }
 
         function schedulePackageAjaxTotalSync($form) {
@@ -8727,8 +8719,7 @@
                 var isJoinerTour = isJoinerTourData(tourData);
                 var $field;
                 var $deposit;
-                var $message;
-                var $controls;
+                var $totalDisplay;
                 var selectedPayment;
                 var total;
                 var valid;
@@ -8746,37 +8737,30 @@
                 }
 
                 $deposit.find('.title-deposit').first().attr('aria-hidden', 'true');
-                $message = $deposit.find('.hr-tour-deposit-amount-message').first();
-
-                if (!$message.length) {
-                        $message = $('<p>', {
-                                'class': 'hr-tour-deposit-amount-message',
-                                'aria-live': 'polite',
-                                hidden: true
-                        });
-                        $controls = $deposit.find('.ovabrw-type-deposit').first();
-
-                        if ($controls.length) {
-                                $message.insertBefore($controls);
-                        } else {
-                                $deposit.prepend($message);
-                        }
-                }
+                $deposit.find('.hr-tour-deposit-amount-message').remove();
+                $totalDisplay = $field.find('.hr-tour-booking-total').first();
 
                 selectedPayment = $deposit.find('input[name=ova_type_deposit]:checked').val();
                 total = Number($form.data('hr-tour-total') || 0);
                 valid = $form.data('hr-tour-total-valid') === true;
 
-                if (selectedPayment !== 'deposit' || !valid || total <= 0 || !Number.isFinite(total)) {
-                        $message.text('').prop('hidden', true);
+                if (!$totalDisplay.length || !valid || total <= 0 || !Number.isFinite(total)) {
                         return;
                 }
 
-                label = window.hrBooking && window.hrBooking.tourDepositAmountLabel
-                        ? window.hrBooking.tourDepositAmountLabel
-                        : 'Pay only %s deposit';
+                if (selectedPayment === 'deposit') {
+                        label = window.hrBooking && window.hrBooking.tourDepositSummaryLabel
+                                ? window.hrBooking.tourDepositSummaryLabel
+                                : 'Deposit: %1$s (of %2$s)';
 
-                $message.text(label.replace('%s', formatPrice(total * 0.5))).prop('hidden', false);
+                        $totalDisplay.text(label.replace('%1$s', formatPrice(total * 0.5)).replace('%2$s', formatPrice(total)));
+                        return;
+                }
+
+                label = window.hrBooking && window.hrBooking.tourTotalLabel
+                        ? window.hrBooking.tourTotalLabel
+                        : 'Tour total: %s';
+                $totalDisplay.text(label.replace('%s', formatPrice(total)));
         }
 
         function getTourAdultUnitPrice($form, tourData) {
