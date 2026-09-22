@@ -3224,6 +3224,11 @@ class Hotel_Rates_Booking {
                                 continue;
                         }
 
+                        if ( $is_boat_rental && $this->is_blank_item_data_key( $key ) ) {
+                                $item->delete_meta_data( $key );
+                                continue;
+                        }
+
                         if ( $is_boat_rental && $this->should_remove_boat_item_data( $key, true ) ) {
                                 $item->delete_meta_data( $key );
                                 continue;
@@ -4308,6 +4313,10 @@ class Hotel_Rates_Booking {
                         }
 
                         $key = isset( $data['key'] ) ? (string) $data['key'] : ( isset( $data['name'] ) ? (string) $data['name'] : '' );
+
+                        if ( $this->is_blank_item_data_key( $key ) ) {
+                                continue;
+                        }
 
                         if ( $this->is_boat_clean_order_item_meta_key( $key, $cart_item ) ) {
                                 continue;
