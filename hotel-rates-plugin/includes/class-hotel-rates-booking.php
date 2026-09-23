@@ -395,6 +395,14 @@ class Hotel_Rates_Booking {
                         'portTransferTotalLabel'      => __( 'Port transfer total: %s', 'hotel-rates' ),
                         'portTransferInvalidLabel'    => __( 'This port transfer selection is unavailable.', 'hotel-rates' ),
                 ) );
+
+                wp_enqueue_script(
+                        'hr-booking-sticky-footer-boundary',
+                        HR_PLUGIN_URL . 'public/js/booking-sticky-footer-boundary.js',
+                        array( 'hr-booking' ),
+                        HR_VERSION,
+                        true
+                );
         }
 
         public function render_booking_field( $args ) {
@@ -632,6 +640,7 @@ class Hotel_Rates_Booking {
                                         </div>
                                 </div>
                                 <div class="hr-self-drive-vehicle-selectors"></div>
+                                <p class="hr-self-drive-validation-message" role="alert" aria-live="polite" hidden></p>
                                 <p class="hr-self-drive-booking-total"></p>
 
                                 <input type="hidden" name="hr_self_drive_rental_id" value="<?php echo esc_attr( $self_drive_data['rentalId'] ); ?>">

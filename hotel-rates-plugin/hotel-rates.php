@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Rates Manager
  * Plugin URI:  https://example.com/hotel-rates
  * Description: Manage hotel and tour rates by region, place, and hotel with per-night, per-pax pricing.
- * Version:     1.5.156
+ * Version:     1.5.163
  * Author:      Island Diaries Travel and Tours
  * License:     GPL-2.0+
  * Text Domain: hotel-rates
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         exit;
 }
 
-define( 'HR_VERSION',     '1.5.156' );
+define( 'HR_VERSION',     '1.5.163' );
 define( 'HR_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'HR_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'HR_PLUGIN_FILE', __FILE__ );

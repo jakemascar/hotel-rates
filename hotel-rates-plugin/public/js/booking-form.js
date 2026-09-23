@@ -641,6 +641,21 @@
                 return Math.max(16, Math.ceil(bottom) + 16);
         }
 
+        function getBookingStickyFooterTop() {
+                var footerTop = Infinity;
+
+                $('.wrap_footer, footer.footer, footer, .elementor-location-footer, [data-elementor-type=footer], #footer, .site-footer').each(function () {
+                        var rect = this.getBoundingClientRect();
+                        var style = window.getComputedStyle(this);
+
+                        if (style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0) {
+                                footerTop = Math.min(footerTop, rect.top);
+                        }
+                });
+
+                return footerTop;
+        }
+
         function restoreBookingStickyCard($card) {
                 var $placeholder = $card.data('hrBookingStickyPlaceholder');
 
@@ -670,6 +685,8 @@
                 var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
                 var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
                 var topOffset = getBookingStickyHeaderOffset();
+                var footerTop = getBookingStickyFooterTop();
+                var boundaryGap = 16;
 
                 $('.hr-booking-sticky-target').each(function () {
                         var $card = $(this);
@@ -681,6 +698,8 @@
                         var placeholderRect;
                         var start;
                         var maxHeight;
+                        var stickyHeight;
+                        var stickyTop;
                         var backgroundColor;
 
                         if (!desktop) {
@@ -706,7 +725,7 @@
                                 return;
                         }
 
-                        maxHeight = Math.max(240, viewportHeight - topOffset - 16);
+                        maxHeight = Math.max(240, viewportHeight - topOffset - boundaryGap);
 
                         if (!active) {
                                 visualRect = visualElement.getBoundingClientRect();
@@ -740,8 +759,18 @@
                                 }
                         }
 
+                        stickyHeight = Math.min(
+                                maxHeight,
+                                Math.ceil(Math.max(visualElement.getBoundingClientRect().height, visualElement.scrollHeight || 0))
+                        );
+                        stickyTop = topOffset;
+
+                        if (Number.isFinite(footerTop)) {
+                                stickyTop = Math.min(stickyTop, footerTop - boundaryGap - stickyHeight);
+                        }
+
                         $card.css({
-                                '--hr-booking-sticky-top': Math.round(topOffset) + 'px',
+                                '--hr-booking-sticky-top': Math.round(stickyTop) + 'px',
                                 '--hr-booking-sticky-max-height': Math.round(maxHeight) + 'px'
                         });
                 });
@@ -1491,6 +1520,11 @@
                                 .removeData('hr-uniform-booking-calendar-pending')
                                 .prop('disabled', false)
                                 .removeAttr('aria-busy');
+
+                        if ('self-drive' === moduleName) {
+                                syncSelfDriveReturnDateState($form);
+                        }
+
 
                         if (!window.easepick || !window.easepick.create) {
                                 initUniformBookingCalendarFallback($form, $input, options, resolvedContextMinimum);
@@ -6796,6 +6830,25 @@
                 initUniformBookingCalendar($form, $returnInput, 'self-drive', function () {
                         return $dateInput && $dateInput.length ? String($dateInput.val() || '') : '';
                 });
+                syncSelfDriveReturnDateState($form);
+
+                window.setTimeout(function () {
+                        var minimumDate;
+
+                        if (!$returnInput.data('hr-uniform-booking-calendar-pending') || $returnInput.data('hr-uniform-booking-calendar-bound')) {
+                                syncSelfDriveReturnDateMinimum($form);
+                                return;
+                        }
+
+                        minimumDate = $dateInput && $dateInput.length ? String($dateInput.val() || '') : '';
+                        $returnInput
+                                .removeData('hr-uniform-booking-calendar-pending')
+                                .prop('disabled', false)
+                                .removeAttr('aria-busy');
+                        initUniformBookingCalendarFallback($form, $returnInput, getUniformBookingCalendarFallbackOptions(), minimumDate);
+                        syncSelfDriveReturnDateMinimum($form);
+                        syncSelfDriveReturnDateState($form);
+                }, 2000);
         }
 
         function initSelfDriveReturnDatePickerLegacy($returnInput, $dateInput) {
@@ -6999,23 +7052,69 @@
                 $form.find('input[name="hr_self_drive_return_date"]').val('').removeAttr('value');
         }
 
+        function syncSelfDriveReturnDateState($form) {
+                var $returnInput = getSelfDriveReturnDateInput($form);
+                var rentalDate = parseBookingDate(findSelfDriveRentalDateInput($form));
+                var calendarPending = $returnInput.data('hr-uniform-booking-calendar-pending') === true;
+                var available = !!rentalDate && !calendarPending;
+
+                if (!$returnInput.length) {
+                        return false;
+                }
+
+                $returnInput
+                        .prop('disabled', !available)
+                        .attr('aria-disabled', available ? 'false' : 'true')
+                        .toggleClass('is-available', available)
+                        .toggleClass('is-locked', !available);
+
+                return available;
+        }
+
+
+        function syncSelfDriveReturnDateMinimum($form) {
+                var $rentalInput = findSelfDriveRentalDateInput($form);
+                var $returnInput = getSelfDriveReturnDateInput($form);
+                var rentalDate = parseBookingDate($rentalInput);
+                var returnDate = parseBookingDate($returnInput);
+                var picker;
+
+                if (!$returnInput.length || !rentalDate) {
+                        syncSelfDriveReturnDateState($form);
+                        return;
+                }
+
+                if ($returnInput[0]._flatpickr && typeof $returnInput[0]._flatpickr.set === 'function') {
+                        $returnInput[0]._flatpickr.set('minDate', rentalDate);
+                }
+
+                if ($.fn.datepicker && $returnInput.data('datepicker')) {
+                        try {
+                                $returnInput.datepicker('option', 'minDate', rentalDate);
+                        } catch (error) {
+                                selfDriveDebugLog('jquery datepicker return minimum update failed', error.message || error);
+                        }
+                }
+
+                if ('date' === String($returnInput.attr('type') || '').toLowerCase()) {
+                        $returnInput.attr('min', getSelfDriveFallbackCalendarDateKey(rentalDate));
+                }
+
+                picker = $returnInput.data('hr-self-drive-easepick') || $returnInput.data('hr-uniform-booking-easepick');
+                if (picker && typeof picker.renderAll === 'function') {
+                        picker.renderAll();
+                }
+
+                if (returnDate && returnDate.getTime() < rentalDate.getTime()) {
+                        clearSelfDriveReturnDateField($form);
+                }
+
+                syncSelfDriveReturnDateState($form);
+        }
+
         function scheduleSelfDriveReturnDateReset($form) {
-                var now = Date.now ? Date.now() : new Date().getTime();
-                var resetUntil = now + 1400;
-
-                $form.data('hr-self-drive-return-date-reset-until', resetUntil);
-
-                [0, 50, 150, 350, 700, 1200].forEach(function (delay) {
-                        window.setTimeout(function () {
-                                var currentTime = Date.now ? Date.now() : new Date().getTime();
-
-                                if (delay > 0 && currentTime > Number($form.data('hr-self-drive-return-date-reset-until') || 0)) {
-                                        return;
-                                }
-
-                                clearSelfDriveReturnDateField($form);
-                        }, delay);
-                });
+                clearSelfDriveReturnDateField($form);
+                syncSelfDriveReturnDateMinimum($form);
         }
 
         function clearSelfDriveReturnDateIfRentalDateChanged($form) {
@@ -7075,9 +7174,6 @@
                 }
 
                 intervalId = window.setInterval(function () {
-                        var resetUntil = Number($form.data('hr-self-drive-return-date-reset-until') || 0);
-                        var now = Date.now ? Date.now() : new Date().getTime();
-
                         if (!document.body || !$form[0] || !document.body.contains($form[0])) {
                                 window.clearInterval(intervalId);
                                 return;
@@ -7085,11 +7181,6 @@
 
                         clearSelfDriveReturnDateIfRentalDateChanged($form);
 
-                        if (resetUntil && now <= resetUntil && getSelfDriveReturnDateInputs($form).filter(function () {
-                                return String($(this).val() || '') !== '';
-                        }).length) {
-                                clearSelfDriveReturnDateField($form);
-                        }
                 }, 250);
 
                 $form.data('hr-self-drive-rental-date-watcher-interval', intervalId);
@@ -7192,7 +7283,23 @@
         }
 
         function setSelfDriveValidationMessage($form, $target, message) {
-                $target.text(hasSelfDriveValidationAttempted($form) ? (message || '') : '');
+                var $field = $form.find('.hr-self-drive-booking-field');
+                var $message = $field.find('.hr-self-drive-validation-message').first();
+                var visibleMessage = hasSelfDriveValidationAttempted($form) ? (message || '') : '';
+
+                if (!$message.length) {
+                        $message = $('<p>', {
+                                class: 'hr-self-drive-validation-message',
+                                role: 'alert',
+                                'aria-live': 'polite',
+                                hidden: true
+                        }).insertBefore($target);
+                }
+
+                $message
+                        .text(visibleMessage)
+                        .prop('hidden', !visibleMessage)
+                        .toggleClass('is-visible', !!visibleMessage);
         }
 
         function clearSelfDriveBaseValidation($form) {
@@ -7205,6 +7312,10 @@
                         var directText = getDirectText($element);
                         var fullText = $.trim($element.text()).replace(/\s+/g, ' ');
                         var isAjaxError = $element.hasClass('ajax-error');
+
+                        if ($element.hasClass('hr-self-drive-validation-message')) {
+                                return;
+                        }
 
                         if (!baseErrorPattern.test(directText) && !(isAjaxError && baseErrorPattern.test(fullText))) {
                                 return;
@@ -7502,6 +7613,18 @@
                         return false;
                 }
 
+
+                $field.find([
+                        'input[name="hr_self_drive_selection_payload"]',
+                        'input[name="hr_self_drive_rental_date"]',
+                        'input[name="hr_self_drive_return_date"]',
+                        'input[name="hr_self_drive_days"]',
+                        'input[name="hr_self_drive_start_time"]',
+                        'input[name="hr_self_drive_return_time"]',
+                        'input[name="hr_self_drive_handover_option"]',
+                        'input[name="hr_self_drive_delivery_address"]',
+                        'input[name="hr_self_drive_total"]'
+                ].join(',')).val('').removeAttr('value');
                 updateSelfDriveDeliveryAddressState($field);
                 syncSelfDriveGuestFields($form);
 
@@ -7625,6 +7748,7 @@
                 $field.find('input[name="hr_self_drive_handover_option"]').val(handover);
                 $field.find('input[name="hr_self_drive_delivery_address"]').val(handover === 'delivery' ? deliveryAddress : '');
                 $field.find('input[name="hr_self_drive_total"]').val(Number.isFinite(total) ? String(total) : '');
+                setSelfDriveValidationMessage($form, $total, '');
                 $total.text(Number.isFinite(total) ? (window.hrBooking ? window.hrBooking.selfDriveTotalLabel : 'Self-drive rental total: %s').replace('%s', formatPrice(total)) : '');
                 $form.data('hr-self-drive-total', total).data('hr-self-drive-total-valid', Number.isFinite(total));
                 syncSelfDriveBaseBookingState($form, total, selectedCount, Number.isFinite(total) && total > 0);

@@ -254,14 +254,14 @@
 .hr-actions-col { width: 100px; white-space: nowrap; text-align: center; }
 .hr-no-rates { color: #8c8f94; font-style: italic; margin: 0 0 10px; }
 
-/* Keep long Day Tour names inside their own column. */
-.hr-tour-rate-display[data-type='Day Tour'] {
+/* Keep long names inside their own column on every pax-based tour list. */
+.hr-tour-rate-display:not([data-type='Package Deal']):not([data-type='Airport Transfer']) {
         min-width: 1450px;
         table-layout: auto;
 }
 
-.hr-tour-rate-display[data-type='Day Tour'] th.hr-col-meal,
-.hr-tour-rate-display[data-type='Day Tour'] td.hr-col-meal {
+.hr-tour-rate-display:not([data-type='Package Deal']):not([data-type='Airport Transfer']) th.hr-col-meal,
+.hr-tour-rate-display:not([data-type='Package Deal']):not([data-type='Airport Transfer']) td.hr-col-meal {
         width: 260px;
         min-width: 260px;
         max-width: 260px;
@@ -271,13 +271,41 @@
         line-height: 1.4;
 }
 
-.hr-tour-rate-display[data-type='Day Tour'] .hr-col-pax {
+.hr-tour-rate-display:not([data-type='Package Deal']):not([data-type='Airport Transfer']) .hr-col-pax {
         min-width: 115px;
         white-space: nowrap;
 }
 
-.hr-tour-rate-display[data-type='Day Tour'] .hr-actions-col {
+.hr-tour-rate-display:not([data-type='Package Deal']):not([data-type='Airport Transfer']) .hr-actions-col {
         min-width: 100px;
+}
+
+/* Keep saved rental/service list data contained within its assigned column. */
+.hr-rate-table.striped:not(.hr-tour-rate-display) {
+        width: 100%;
+        min-width: 1100px;
+        table-layout: fixed;
+}
+
+.hr-rate-table.striped:not(.hr-tour-rate-display) th,
+.hr-rate-table.striped:not(.hr-tour-rate-display) td {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.4;
+        vertical-align: top;
+}
+
+.hr-rate-table.striped:not(.hr-tour-rate-display) th:first-child,
+.hr-rate-table.striped:not(.hr-tour-rate-display) td:first-child {
+        width: 240px;
+}
+
+.hr-rate-table.striped:not(.hr-tour-rate-display) .hr-actions-col {
+        width: 110px;
+        min-width: 110px;
+        white-space: nowrap;
+        vertical-align: middle;
 }
 
 .hr-motorbike-admin-models,

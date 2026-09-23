@@ -693,6 +693,15 @@
         cursor: pointer !important;
 }
 
+.hr-self-drive-booking-field .hr-self-drive-return-date-input.is-locked,
+.hr-self-drive-booking-field .hr-self-drive-return-date-input:disabled {
+        cursor: not-allowed !important;
+}
+
+.hr-self-drive-booking-field .hr-self-drive-return-date-input.is-available:not(:disabled) {
+        cursor: pointer !important;
+}
+
 .hr-booking-sticky-placeholder {
         display: none;
 }
@@ -875,6 +884,13 @@
 .hr-port-transfer-booking-total {
         margin: 14px 0 0;
         font-weight: 600;
+}
+
+.hr-self-drive-validation-message {
+        margin: 14px 0 0;
+        color: #d63638;
+        font-weight: 600;
+        line-height: 1.35;
 }
 
 @media (max-width: 480px) {
