@@ -48,6 +48,19 @@ table.hr-sc-table th {
 	width: 66.6666%;
 }
 
+.hr-specific-tour-rate-table-joiner col.hr-specific-tour-rate-col-price {
+	width: 26.6667%;
+}
+
+.hr-specific-tour-rate-table-joiner col.hr-specific-tour-rate-col-details {
+	width: 73.3333%;
+}
+
+.hr-specific-tour-rate-table-joiner td.hr-specific-tour-rate-price {
+	padding: 16px 14px;
+	vertical-align: middle;
+}
+
 .hr-specific-tour-rate-table td.hr-specific-tour-rate-pax,
 .hr-specific-tour-rate-table td.hr-specific-tour-rate-price {
 	text-align: left;
@@ -137,6 +150,14 @@ table.hr-sc-table th {
 		background: #fff;
 		white-space: normal;
 		overflow-wrap: anywhere;
+	}
+
+	.hr-specific-tour-rate-table-joiner col.hr-specific-tour-rate-col-price {
+		width: 34%;
+	}
+
+	.hr-specific-tour-rate-table-joiner col.hr-specific-tour-rate-col-details {
+		width: 66%;
 	}
 
 	.hr-specific-tour-rate-table .hr-specific-tour-desktop-child-discount {

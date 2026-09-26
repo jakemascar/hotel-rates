@@ -496,6 +496,17 @@ class Hotel_Rates_Shortcodes {
                         );
                 }
 
+                if ( 'Joiner' === (string) $tour_rate->type && ! empty( $rate_rows ) ) {
+                        return $this->render_specific_joiner_rate(
+                                $tour_rate_id,
+                                $tour_rate,
+                                $rate_rows,
+                                $package_details,
+                                $children_rates,
+                                $child_discount_text
+                        );
+                }
+
                 if ( in_array( (string) $tour_rate->type, array( 'Day Tour', 'Joiner' ), true ) && empty( $rate_rows ) ) {
                         return '<p class="hr-sc-empty">' . esc_html__( 'This tour does not currently have passenger rates configured.', 'hotel-rates' ) . '</p>';
                 }
@@ -569,6 +580,48 @@ class Hotel_Rates_Shortcodes {
                 <?php
 
                 return ob_get_clean();
+        }
+
+        /**
+         * Render the compact two-column rate table used only by Joiner tours.
+         */
+        private function render_specific_joiner_rate( $tour_rate_id, $tour_rate, $rate_rows, $package_details, $children_rates, $child_discount_text ) {
+                $joiner_rate = reset( $rate_rows );
+                $quote       = chr( 34 );
+                $html        = '<div class=' . $quote . 'hr-sc-wrap hr-specific-tour-rates hr-specific-tour-rates-joiner' . $quote;
+                $html       .= ' data-tour-rate-id=' . $quote . esc_attr( $tour_rate_id ) . $quote;
+                $html       .= ' data-tour-type=' . $quote . esc_attr( $tour_rate->type ) . $quote . '>';
+                $html       .= '<div class=' . $quote . 'hr-sc-table-overflow' . $quote . '>';
+                $html       .= '<table class=' . $quote . 'hr-sc-table hr-specific-tour-rate-table hr-specific-tour-rate-table-joiner' . $quote . '>';
+                $html       .= '<colgroup><col class=' . $quote . 'hr-specific-tour-rate-col-price' . $quote . '>';
+                $html       .= '<col class=' . $quote . 'hr-specific-tour-rate-col-details' . $quote . '></colgroup>';
+                $html       .= '<thead><tr><th scope=col>' . esc_html__( 'Rate per Person', 'hotel-rates' ) . '</th>';
+                $html       .= '<th scope=col>' . esc_html__( 'Details of the Package', 'hotel-rates' ) . '</th></tr></thead><tbody><tr>';
+                $html       .= '<td class=' . $quote . 'hr-specific-tour-rate-price' . $quote . '>';
+                $html       .= wp_kses_post( Hotel_Rates_Currency::format_display_price( $joiner_rate['value'] ) ) . '</td>';
+                $html       .= '<td class=' . $quote . 'hr-specific-tour-package-details' . $quote . '>';
+
+                if ( ! empty( $package_details ) ) {
+                        foreach ( $package_details as $detail_group ) {
+                                $html .= '<section class=' . $quote . 'hr-specific-tour-package-detail-group' . $quote . '>';
+                                $html .= '<h4>' . esc_html( $detail_group['header'] ) . '</h4><ul>';
+                                foreach ( $detail_group['items'] as $detail_item ) {
+                                        $html .= '<li>' . esc_html( $detail_item ) . '</li>';
+                                }
+                                $html .= '</ul></section>';
+                        }
+                } else {
+                        $html .= '&mdash;';
+                }
+
+                $html .= '</td></tr>';
+
+                if ( ! empty( $children_rates['enabled'] ) ) {
+                        $html .= '<tr class=' . $quote . 'hr-specific-tour-child-discount-row' . $quote . '>';
+                        $html .= '<td colspan=2>' . esc_html( $child_discount_text ) . '</td></tr>';
+                }
+
+                return $html . '</tbody></table></div></div>';
         }
 
         /**
