@@ -1,0 +1,47 @@
+.woocommerce-checkout .hr-nationality-field select {
+	width: 100% !important;
+	min-height: 48px;
+}
+
+.hr-nationality-option {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+}
+
+.hr-nationality-option .hr-nationality-flag {
+	flex: 0 0 24px;
+	width: 24px;
+	height: 18px;
+	object-fit: cover;
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.select2-container .select2-results__option--highlighted[aria-selected],
+.select2-container .select2-results__option--highlighted[data-selected] {
+	background-color: #eef4f5 !important;
+	color: #111 !important;
+}
+
+.woocommerce-checkout .hr-nationality-field .select2-selection--single {
+	display: flex;
+	align-items: center;
+	min-height: 48px;
+}
+
+.woocommerce-checkout .hr-nationality-field .select2-selection__rendered {
+	width: 100%;
+}
+
+.woocommerce-checkout .hr-special-request-field textarea {
+	min-height: 110px;
+	resize: vertical;
+}
+
+@media (max-width: 600px) {
+	.woocommerce-checkout .hr-nationality-field,
+	.woocommerce-checkout .hr-phone-whatsapp-field {
+		float: none;
+		width: 100%;
+	}
+}

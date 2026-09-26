@@ -649,6 +649,99 @@
                 return type === 'Day Tour' || type === 'Joiner';
         }
 
+        var DAY_TOUR_DEFAULT_MIN_PAX = 1;
+        var DAY_TOUR_DEFAULT_MAX_PAX = 12;
+        var DAY_TOUR_MAX_PAX = 30;
+
+        function getDayTourPaxCells() {
+                return $tourModal.find('.hr-modal-pax-grid').not('.hr-tour-children-pax-grid').first().find('.hr-modal-pax-cell');
+        }
+
+        function getTourPaxSupportedMaximum() {
+                var maximum = 0;
+
+                getDayTourPaxCells().each(function () {
+                        maximum = Math.max(maximum, parseInt($(this).data('pax'), 10) || 0);
+                });
+
+                return maximum || DAY_TOUR_DEFAULT_MAX_PAX;
+        }
+
+        function getConfiguredDayTourPaxRange() {
+                var configured = [];
+
+                getDayTourPaxCells().each(function () {
+                        var $cell = $(this);
+                        var pax = parseInt($cell.data('pax'), 10);
+                        var rate = Number($cell.find('.hr-pax-input').val());
+
+                        if (Number.isFinite(pax) && pax > 0 && Number.isFinite(rate) && rate > 0) {
+                                configured.push(pax);
+                        }
+                });
+
+                return configured.length ? {
+                        minimum: Math.min.apply(Math, configured),
+                        maximum: Math.max.apply(Math, configured)
+                } : {
+                        minimum: DAY_TOUR_DEFAULT_MIN_PAX,
+                        maximum: DAY_TOUR_DEFAULT_MAX_PAX
+                };
+        }
+
+        function applyDayTourPaxRange(minimum, maximum) {
+                var supportedMaximum = Math.min(DAY_TOUR_MAX_PAX, getTourPaxSupportedMaximum());
+
+                minimum = Math.max(1, Math.min(supportedMaximum, parseInt(minimum, 10) || 1));
+                maximum = Math.max(minimum, Math.min(supportedMaximum, parseInt(maximum, 10) || minimum));
+
+                $('#hr-day-tour-min-pax').val(String(minimum));
+                $('#hr-day-tour-max-pax').val(String(maximum));
+
+                getDayTourPaxCells().each(function () {
+                        var $cell = $(this);
+                        var pax = parseInt($cell.data('pax'), 10);
+                        var outside = pax < minimum || pax > maximum;
+
+                        $cell
+                                .toggleClass('hr-day-tour-pax-outside-range', outside)
+                                .prop('hidden', outside)
+                                .toggle(!outside);
+                        $cell.find('.hr-pax-input').prop('disabled', outside);
+                });
+
+                $tourModal.find('.hr-day-tour-pax-step').each(function () {
+                        var $button = $(this);
+                        var boundary = String($button.data('boundary') || '');
+                        var direction = parseInt($button.data('direction'), 10) || 0;
+                        var disabled = boundary === 'minimum'
+                                ? (direction < 0 ? minimum <= 1 : minimum >= maximum)
+                                : (direction < 0 ? maximum <= minimum : maximum >= supportedMaximum);
+
+                        $button.prop('disabled', disabled);
+                });
+        }
+
+        function initializeDayTourPaxRange(type, useConfiguredRates) {
+                var range;
+
+                if (!isDayOrJoinerTourType(type)) {
+                        getDayTourPaxCells()
+                                .removeClass('hr-day-tour-pax-outside-range')
+                                .prop('hidden', false)
+                                .show()
+                                .find('.hr-pax-input')
+                                .prop('disabled', false);
+                        return;
+                }
+
+                range = useConfiguredRates ? getConfiguredDayTourPaxRange() : {
+                        minimum: DAY_TOUR_DEFAULT_MIN_PAX,
+                        maximum: Math.min(DAY_TOUR_DEFAULT_MAX_PAX, getTourPaxSupportedMaximum())
+                };
+                applyDayTourPaxRange(range.minimum, range.maximum);
+        }
+
         function escapeTourAddonAttr(value) {
                 return (value === null || typeof value === 'undefined' ? '' : String(value))
                         .replace(/&/g, '&amp;')
@@ -697,6 +790,15 @@
                 $tourModal.find('.hr-tour-package-details').toggle(childRateTour);
                 $tourModal.find('.hr-tour-package-details :input').prop('disabled', !childRateTour);
                 $tourModal.find('.hr-airport-transfer-routes').toggle(airportTransfer);
+                $tourModal.find('.hr-day-tour-pax-range').prop('hidden', !childRateTour).toggle(childRateTour);
+                $tourModal.find('.hr-tour-pax-range-help').text(dayTour
+                        ? 'Choose the minimum and maximum paying guests supported by this Day Tour.'
+                        : 'Choose the minimum and maximum paying guests supported by this Joiner Tour.');
+
+                if (!childRateTour) {
+                        initializeDayTourPaxRange(tourType, false);
+                }
+
                 refreshTourChildrenRateLabels();
         }
 
@@ -1100,8 +1202,64 @@
                 reindexAirportTransferRoutes();
         });
 
-        $tourModal.on('submit', 'form', function () {
-                if ( !isAirportTransferType($('#hr-tour-type-input').val()) ) {
+        $tourModal.on('click', '.hr-day-tour-pax-step', function () {
+                var $button = $(this);
+                var minimum = parseInt($('#hr-day-tour-min-pax').val(), 10) || 1;
+                var maximum = parseInt($('#hr-day-tour-max-pax').val(), 10) || minimum;
+                var direction = parseInt($button.data('direction'), 10) || 0;
+
+                if (String($button.data('boundary') || '') === 'minimum') {
+                        minimum += direction;
+                } else {
+                        maximum += direction;
+                }
+
+                applyDayTourPaxRange(minimum, maximum);
+        });
+
+        $tourModal.on('submit', 'form', function (event) {
+                var type = String($('#hr-tour-type-input').val() || '');
+
+                if (isDayOrJoinerTourType(type)) {
+                        var minimum = parseInt($('#hr-day-tour-min-pax').val(), 10) || 1;
+                        var maximum = parseInt($('#hr-day-tour-max-pax').val(), 10) || minimum;
+                        var missingRates = [];
+                        var removedRates = [];
+
+                        getDayTourPaxCells().each(function () {
+                                var $cell = $(this);
+                                var pax = parseInt($cell.data('pax'), 10);
+                                var $input = $cell.find('.hr-pax-input');
+                                var rate = Number($input.val());
+                                var inRange = pax >= minimum && pax <= maximum;
+
+                                if (inRange && (!Number.isFinite(rate) || rate <= 0)) {
+                                        missingRates.push(pax);
+                                }
+
+                                if (!inRange && Number.isFinite(rate) && rate > 0) {
+                                        removedRates.push(pax);
+                                }
+                        });
+
+                        if (missingRates.length) {
+                                event.preventDefault();
+                                window.alert('Enter a positive rate for every active pax tier: ' + missingRates.join(', ') + '.');
+                                return false;
+                        }
+
+                        if (removedRates.length && !window.confirm('Saving this range will remove the existing rates for pax: ' + removedRates.join(', ') + '. Continue?')) {
+                                event.preventDefault();
+                                return false;
+                        }
+
+                        getDayTourPaxCells().filter('.hr-day-tour-pax-outside-range')
+                                .find('.hr-pax-input')
+                                .val('')
+                                .prop('disabled', false);
+                }
+
+                if ( !isAirportTransferType(type) ) {
                         return;
                 }
 
@@ -1117,8 +1275,9 @@
                 $('#hr-tour-region-id').val($btn.data('region-id'));
                 $('#hr-tour-type-input').val(type);
                 $('#hr-tour-name-input').val('');
-                for ( var p = 1; p <= 12; p++ ) { $('#hr-tour-pax-' + p).val(''); }
+                for ( var p = 1; p <= DAY_TOUR_MAX_PAX; p++ ) { $('#hr-tour-pax-' + p).val(''); }
                 setTourRateModalType(type);
+                initializeDayTourPaxRange(type, false);
                 resetTourBookingFields({});
                 resetTourChildrenRates({});
                 resetTourAddonFields([]);
@@ -1140,10 +1299,11 @@
                 $('#hr-tour-rate-id').val($btn.data('id'));
                 $('#hr-tour-type-input').val(type);
                 $('#hr-tour-name-input').val($btn.data('tour-name'));
-                for ( var p = 1; p <= 12; p++ ) {
+                for ( var p = 1; p <= DAY_TOUR_MAX_PAX; p++ ) {
                         $('#hr-tour-pax-' + p).val($btn.data('pax-' + p) || '');
                 }
                 setTourRateModalType(type);
+                initializeDayTourPaxRange(type, true);
                 resetTourBookingFields($btn.attr('data-booking-fields'));
                 resetTourChildrenRates($btn.attr('data-children-rates'));
                 resetTourAddonFields($btn.attr('data-addons'));

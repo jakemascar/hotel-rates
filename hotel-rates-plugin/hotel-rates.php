@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Rates Manager
  * Plugin URI:  https://example.com/hotel-rates
  * Description: Manage hotel and tour rates by region, place, and hotel with per-night, per-pax pricing.
- * Version:     1.5.163
+ * Version:     1.5.177
  * Author:      Island Diaries Travel and Tours
  * License:     GPL-2.0+
  * Text Domain: hotel-rates
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         exit;
 }
 
-define( 'HR_VERSION',     '1.5.163' );
+define( 'HR_VERSION',     '1.5.177' );
 define( 'HR_PLUGIN_DIR',  plugin_dir_path( __FILE__ ) );
 define( 'HR_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'HR_PLUGIN_FILE', __FILE__ );
@@ -24,6 +24,7 @@ require_once HR_PLUGIN_DIR . 'includes/class-hotel-rates-ajax.php';
 require_once HR_PLUGIN_DIR . 'includes/class-hotel-rates-currency.php';
 require_once HR_PLUGIN_DIR . 'includes/class-hotel-rates-shortcodes.php';
 require_once HR_PLUGIN_DIR . 'includes/class-hotel-rates-booking.php';
+require_once HR_PLUGIN_DIR . 'includes/class-hotel-rates-checkout-fields.php';
 
 register_activation_hook( __FILE__, array( 'Hotel_Rates_DB', 'create_tables' ) );
 register_deactivation_hook( __FILE__, '__return_true' );
@@ -36,4 +37,5 @@ add_action( 'plugins_loaded', function () {
         new Hotel_Rates_Ajax();
         new Hotel_Rates_Shortcodes();
         new Hotel_Rates_Booking();
+        new Hotel_Rates_Checkout_Fields();
 } );

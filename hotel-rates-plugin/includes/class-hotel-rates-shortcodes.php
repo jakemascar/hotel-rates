@@ -434,12 +434,12 @@ class Hotel_Rates_Shortcodes {
                 $atts = shortcode_atts( array(
                         'tour_rate_id' => 0,
                         'product_id'   => 0,
-                        'max_pax'      => Hotel_Rates_DB::MAX_PAX,
+                        'max_pax'      => Hotel_Rates_DB::DAY_TOUR_MAX_PAX,
                 ), $atts, 'specific_tour_rates' );
 
                 $tour_rate_id = absint( $atts['tour_rate_id'] );
                 $product_id   = absint( $atts['product_id'] );
-                $max_pax      = max( 1, min( Hotel_Rates_DB::MAX_PAX, (int) $atts['max_pax'] ) );
+                $max_pax      = max( 1, min( Hotel_Rates_DB::DAY_TOUR_MAX_PAX, (int) $atts['max_pax'] ) );
 
                 if ( ! $tour_rate_id ) {
                         if ( ! $product_id ) {
@@ -465,6 +465,11 @@ class Hotel_Rates_Shortcodes {
                         return '<p class="hr-sc-error">' . esc_html__( 'The selected tour rate must be a Day Tour or Joiner Tour.', 'hotel-rates' ) . '</p>';
                 }
 
+                $type_max_pax = 'Day Tour' === (string) $tour_rate->type
+                        ? Hotel_Rates_DB::DAY_TOUR_MAX_PAX
+                        : Hotel_Rates_DB::MAX_PAX;
+                $max_pax = min( $max_pax, $type_max_pax );
+
                 $package_details = Hotel_Rates_DB::normalize_tour_package_details( $tour_rate->package_details ?? '' );
                 $children_rates  = Hotel_Rates_DB::normalize_tour_children_rates( $tour_rate->children_rates ?? '' );
                 $child_discount  = isset( $children_rates['discount_percent'] ) ? (float) $children_rates['discount_percent'] : 0.0;
@@ -475,6 +480,25 @@ class Hotel_Rates_Shortcodes {
                         __( 'Each child uses the adult rate for the total adults plus children count, then %s%% is applied.', 'hotel-rates' ),
                         $child_discount_label
                 );
+                $rate_rows = array();
+
+                for ( $pax = 1; $pax <= $max_pax; $pax++ ) {
+                        $column = 'pax_' . $pax;
+                        $value  = isset( $tour_rate->$column ) && '' !== $tour_rate->$column ? $tour_rate->$column : null;
+
+                        if ( in_array( (string) $tour_rate->type, array( 'Day Tour', 'Joiner' ), true ) && ( ! is_numeric( $value ) || (float) $value <= 0 ) ) {
+                                continue;
+                        }
+
+                        $rate_rows[] = array(
+                                'pax'   => $pax,
+                                'value' => $value,
+                        );
+                }
+
+                if ( in_array( (string) $tour_rate->type, array( 'Day Tour', 'Joiner' ), true ) && empty( $rate_rows ) ) {
+                        return '<p class="hr-sc-empty">' . esc_html__( 'This tour does not currently have passenger rates configured.', 'hotel-rates' ) . '</p>';
+                }
 
 
                 ob_start();
@@ -499,16 +523,12 @@ class Hotel_Rates_Shortcodes {
                                                 </tr>
                                         </thead>
                                         <tbody>
-                                                <?php for ( $pax = 1; $pax <= $max_pax; $pax++ ) : ?>
-                                                                <?php
-                                                                $column = 'pax_' . $pax;
-                                                                $value  = isset( $tour_rate->$column ) && '' !== $tour_rate->$column ? $tour_rate->$column : null;
-                                                                ?>
+                                                <?php foreach ( $rate_rows as $rate_row_index => $rate_row ) : ?>
                                                         <tr>
-                                                                <td class="hr-specific-tour-rate-pax"><?php echo esc_html( $pax ); ?></td>
-                                                                <td class="hr-specific-tour-rate-price"><?php echo null === $value ? '&mdash;' : wp_kses_post( Hotel_Rates_Currency::format_display_price( $value ) ); ?></td>
-                                                                <?php if ( 1 === $pax ) : ?>
-                                                                        <td class="hr-specific-tour-package-details" rowspan="<?php echo esc_attr( $max_pax ); ?>">
+                                                                <td class="hr-specific-tour-rate-pax"><?php echo esc_html( $rate_row['pax'] ); ?></td>
+                                                                <td class="hr-specific-tour-rate-price"><?php echo null === $rate_row['value'] ? '&mdash;' : wp_kses_post( Hotel_Rates_Currency::format_display_price( $rate_row['value'] ) ); ?></td>
+                                                                <?php if ( 0 === $rate_row_index ) : ?>
+                                                                        <td class="hr-specific-tour-package-details" rowspan="<?php echo esc_attr( count( $rate_rows ) ); ?>">
                                                                                 <?php if ( ! empty( $package_details ) ) : ?>
                                                                                         <?php foreach ( $package_details as $detail_group ) : ?>
                                                                                                 <section class="hr-specific-tour-package-detail-group">
@@ -526,7 +546,7 @@ class Hotel_Rates_Shortcodes {
                                                                         </td>
                                                                 <?php endif; ?>
                                                         </tr>
-                                                <?php endfor; ?>
+                                                <?php endforeach; ?>
 						<?php if ( ! empty( $children_rates['enabled'] ) ) : ?>
 							<tr class="hr-specific-tour-child-discount-row hr-specific-tour-desktop-child-discount">
 								<td colspan="3">

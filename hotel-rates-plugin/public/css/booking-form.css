@@ -1240,3 +1240,18 @@ div.hr-arrival-time-labeled > label.hr-arrival-time-native-label {
                 font-size: 14px;
         }
 }
+.hr-day-tour-capacity-message,
+.hr-joiner-capacity-message {
+        margin: 14px 0 0;
+        color: #d63638;
+        font-weight: 600;
+        line-height: 1.35;
+}
+
+.hr-day-tour-booking-form .guests-icon.hr-day-tour-capacity-disabled,
+.hr-day-tour-booking-form .guests-plus.hr-day-tour-capacity-disabled,
+.hr-joiner-booking-form .guests-icon.hr-joiner-capacity-disabled,
+.hr-joiner-booking-form .guests-plus.hr-joiner-capacity-disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+}

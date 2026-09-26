@@ -4,7 +4,7 @@
  * provided by Hotel_Rates_Admin::page_tour_rates()
  */
 $tour_types        = Hotel_Rates_DB::TOUR_TYPES;
-$max_pax           = Hotel_Rates_DB::MAX_PAX;
+$max_pax           = 'Day Tour' === $tour_type ? Hotel_Rates_DB::DAY_TOUR_MAX_PAX : Hotel_Rates_DB::MAX_PAX;
 $default_pax_shown = 8;
 $places_lookup     = array();
 
@@ -281,9 +281,28 @@ foreach ( Hotel_Rates_DB::get_places() as $lookup_place ) {
 					</div>
 				</div>
 
+				<div class="hr-day-tour-pax-range" hidden>
+					<h3><?php esc_html_e( 'Passenger Range', 'hotel-rates' ); ?></h3>
+					<p class="description hr-tour-pax-range-help"><?php esc_html_e( 'Choose the minimum and maximum paying guests supported by this tour.', 'hotel-rates' ); ?></p>
+					<div class="hr-day-tour-pax-range-controls">
+						<label>
+							<span><?php esc_html_e( 'Minimum Pax', 'hotel-rates' ); ?></span>
+							<button type="button" class="button hr-day-tour-pax-step" data-boundary="minimum" data-direction="-1">-</button>
+							<input type="number" id="hr-day-tour-min-pax" value="1" min="1" max="30" readonly>
+							<button type="button" class="button hr-day-tour-pax-step" data-boundary="minimum" data-direction="1">+</button>
+						</label>
+						<label>
+							<span><?php esc_html_e( 'Maximum Pax', 'hotel-rates' ); ?></span>
+							<button type="button" class="button hr-day-tour-pax-step" data-boundary="maximum" data-direction="-1">-</button>
+							<input type="number" id="hr-day-tour-max-pax" value="12" min="1" max="30" readonly>
+							<button type="button" class="button hr-day-tour-pax-step" data-boundary="maximum" data-direction="1">+</button>
+						</label>
+					</div>
+				</div>
+
 				<div class="hr-modal-pax-grid">
 					<?php for ( $p = 1; $p <= $max_pax; $p++ ) : ?>
-					<div class="hr-modal-pax-cell">
+					<div class="hr-modal-pax-cell" data-pax="<?php echo esc_attr( $p ); ?>">
 						<label for="hr-tour-pax-<?php echo $p; ?>"><?php printf( esc_html__( '%d pax (₱)', 'hotel-rates' ), $p ); ?></label>
 						<input type="number" step="0.01" min="0" name="pax_<?php echo $p; ?>" id="hr-tour-pax-<?php echo $p; ?>" class="hr-pax-input" placeholder="0.00">
 					</div>

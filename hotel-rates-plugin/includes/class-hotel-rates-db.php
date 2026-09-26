@@ -7,6 +7,7 @@ class Hotel_Rates_DB {
         const DEFAULT_REGIONS = array( 'Luzon', 'Visayas', 'Mindanao' );
         const MAX_NIGHTS      = 8;
         const MAX_PAX         = 12;
+        const DAY_TOUR_MAX_PAX = 30;
 
         public static function get_legacy_tour_optional_addon_group_labels() {
                 return array(
@@ -23,7 +24,8 @@ class Hotel_Rates_DB {
                 global $wpdb;
                 $charset = $wpdb->get_charset_collate();
 
-                $pax_cols = self::pax_col_defs();
+                $pax_cols      = self::pax_col_defs();
+                $tour_pax_cols = self::pax_col_defs( self::DAY_TOUR_MAX_PAX );
 
                 $regions = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hr_regions (
                         id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -74,7 +76,7 @@ class Hotel_Rates_DB {
                         booking_fields LONGTEXT     NULL,
                         children_rates LONGTEXT     NULL,
                         package_details LONGTEXT    NULL,
-                        {$pax_cols}
+                        {$tour_pax_cols}
                         created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                         PRIMARY KEY (id),
@@ -192,9 +194,9 @@ class Hotel_Rates_DB {
                 self::seed_default_regions();
         }
 
-        private static function pax_col_defs() {
+        private static function pax_col_defs( $max_pax = self::MAX_PAX ) {
                 $cols = '';
-                for ( $p = 1; $p <= self::MAX_PAX; $p++ ) {
+                for ( $p = 1; $p <= $max_pax; $p++ ) {
                         $cols .= "pax_{$p} DECIMAL(12,2) NULL,\n\t\t\t";
                 }
                 return $cols;
@@ -386,7 +388,7 @@ class Hotel_Rates_DB {
                 }
                 // Add pax 9–12 to hr_tour_rates.
                 $tour_cols = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}hr_tour_rates" );
-                for ( $p = 9; $p <= self::MAX_PAX; $p++ ) {
+                for ( $p = 9; $p <= self::DAY_TOUR_MAX_PAX; $p++ ) {
                         if ( ! in_array( "pax_{$p}", $tour_cols, true ) ) {
                                 $wpdb->query( "ALTER TABLE {$wpdb->prefix}hr_tour_rates ADD COLUMN pax_{$p} DECIMAL(12,2) NULL" );
                         }
@@ -1028,7 +1030,8 @@ class Hotel_Rates_DB {
                                         : array()
                         ),
                 );
-                for ( $p = 1; $p <= self::MAX_PAX; $p++ ) {
+                $max_pax = 'Day Tour' === $type ? self::DAY_TOUR_MAX_PAX : self::MAX_PAX;
+                for ( $p = 1; $p <= $max_pax; $p++ ) {
                         $row[ "pax_{$p}" ] = self::maybe_null( $data[ "pax_{$p}" ] ?? null );
                 }
                 if ( ! empty( $data['id'] ) ) {
@@ -1094,7 +1097,8 @@ class Hotel_Rates_DB {
                                 'tour_name'  => $tour_name,
                                 'sort_order' => (int) $idx,
                         );
-                        for ( $p = 1; $p <= self::MAX_PAX; $p++ ) {
+                        $max_pax = 'Day Tour' === $type ? self::DAY_TOUR_MAX_PAX : self::MAX_PAX;
+                        for ( $p = 1; $p <= $max_pax; $p++ ) {
                                 $db_row[ "pax_{$p}" ] = self::maybe_null( $row[ "pax_{$p}" ] ?? null );
                         }
 

@@ -31,6 +31,8 @@ class Hotel_Rates_Booking {
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'prepare_pickup_dropoff_guestless_add_to_cart_request' ), 1, 3 );
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_pickup_dropoff_add_to_cart' ), 10, 3 );
                 add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'prepare_day_tour_add_to_cart_request' ), 1, 3 );
+                add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_day_tour_capacity' ), 9, 3 );
+                add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_joiner_capacity' ), 9, 3 );
                 add_filter( 'ovabrw_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
                 add_filter( 'ovabrw_get_price_by_guests', array( $this, 'add_hotel_rate_to_total' ), 10, 5 );
                 add_action( 'woocommerce_cart_calculate_fees', array( $this, 'add_port_transfer_convenience_fees' ), 20, 1 );
@@ -274,6 +276,14 @@ class Hotel_Rates_Booking {
                         'tourTotalLabel'      => __( 'Tour total: %s', 'hotel-rates' ),
                         'tourDepositSummaryLabel' => __( 'Deposit: %1$s (of %2$s)', 'hotel-rates' ),
                         'tourInvalidLabel'    => __( 'This tour has no rate for the chosen guest count.', 'hotel-rates' ),
+                        'dayTourMinimumPaxLabel' => __( 'This tour requires a minimum of %d paying guests.', 'hotel-rates' ),
+                        'dayTourMaximumPaxLabel' => __( 'This tour accommodates a maximum of %d guests.', 'hotel-rates' ),
+                        'dayTourUnavailablePaxLabel' => __( 'This tour has no rate for %d paying guests.', 'hotel-rates' ),
+                        'joinerMinimumPaxLabel' => __( 'This Joiner Tour requires a minimum of %d paying guests.', 'hotel-rates' ),
+                        'joinerMaximumPaxLabel' => __( 'This Joiner Tour accommodates a maximum of %d guests.', 'hotel-rates' ),
+                        'joinerUnavailablePaxLabel' => __( 'This Joiner Tour has no rate for %d paying guests.', 'hotel-rates' ),
+                        'joinerUnavailableLabel' => __( 'This Joiner Tour is currently unavailable because no passenger rate is configured.', 'hotel-rates' ),
+                        'dayTourUnavailableLabel' => __( 'This tour is currently unavailable because no passenger rate is configured.', 'hotel-rates' ),
                         'tourAddonsLabel'     => __( 'Optional add-ons:', 'hotel-rates' ),
                         'tourChildrenLabel'   => __( 'Children', 'hotel-rates' ),
                         'tourInfantLabel'     => __( '0-2 Infant', 'hotel-rates' ),
@@ -2224,6 +2234,172 @@ class Hotel_Rates_Booking {
 		}
 
 		$this->populate_day_tour_legacy_custom_checkout_fields( $product_id );
+
+		return $passed;
+	}
+
+	public function validate_day_tour_capacity( $passed, $product_id, $quantity ) {
+		$day_tour_rate_id    = $this->get_linked_product_day_tour_rate_id( $product_id );
+		$posted_tour_rate_id = isset( $_POST['hr_tour_rate_id'] ) ? absint( wp_unslash( $_POST['hr_tour_rate_id'] ) ) : 0;
+
+		if ( ! $day_tour_rate_id || $posted_tour_rate_id !== $day_tour_rate_id ) {
+			return $passed;
+		}
+
+		$tour_data = $this->get_tour_booking_data( $day_tour_rate_id );
+
+		if ( empty( $tour_data ) || 'Day Tour' !== (string) ( $tour_data['type'] ?? '' ) ) {
+			return $passed;
+		}
+
+		$capacity = ! empty( $tour_data['capacity'] ) && is_array( $tour_data['capacity'] )
+			? $tour_data['capacity']
+			: $this->resolve_booking_capacity_from_rates( $tour_data['prices'] ?? array() );
+		$minimum_pax = max( 0, (int) ( $capacity['minimum_pax'] ?? 0 ) );
+		$maximum_pax = max( 0, (int) ( $capacity['maximum_pax'] ?? 0 ) );
+		$available_pax_counts = array_map( 'intval', (array) ( $capacity['available_pax_counts'] ?? array() ) );
+
+		if ( $minimum_pax < 1 || $maximum_pax < 1 ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'This tour is currently unavailable because no passenger rate is configured.', 'hotel-rates' ), 'error' );
+			}
+
+			return false;
+		}
+
+		$adults  = $this->get_tour_paid_guest_count_from_request();
+		$children = isset( $_POST['hr_tour_children'] ) ? max( 0, (int) wp_unslash( $_POST['hr_tour_children'] ) ) : 0;
+		$infants = isset( $_POST['hr_tour_infants'] ) ? max( 0, (int) wp_unslash( $_POST['hr_tour_infants'] ) ) : 0;
+		$paid_pax = $adults + $children;
+		$total_pax = $adults + $children + $infants;
+
+		if ( $paid_pax < $minimum_pax ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: minimum number of paying guests */
+						__( 'This tour requires a minimum of %d paying guests.', 'hotel-rates' ),
+						$minimum_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
+
+		if ( ! in_array( $paid_pax, $available_pax_counts, true ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: selected number of paying guests */
+						__( 'This tour has no rate for %d paying guests.', 'hotel-rates' ),
+						$paid_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
+
+		if ( $total_pax > $maximum_pax ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: maximum number of guests */
+						__( 'This tour accommodates a maximum of %d guests.', 'hotel-rates' ),
+						$maximum_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
+
+		return $passed;
+	}
+
+	public function validate_joiner_capacity( $passed, $product_id, $quantity ) {
+		$joiner_rate_id      = $this->get_linked_product_joiner_tour_rate_id( $product_id );
+		$posted_tour_rate_id = isset( $_POST['hr_tour_rate_id'] ) ? absint( wp_unslash( $_POST['hr_tour_rate_id'] ) ) : 0;
+
+		if ( ! $joiner_rate_id || $posted_tour_rate_id !== $joiner_rate_id ) {
+			return $passed;
+		}
+
+		$tour_data = $this->get_tour_booking_data( $joiner_rate_id );
+
+		if ( empty( $tour_data ) || 'Joiner' !== (string) ( $tour_data['type'] ?? '' ) ) {
+			return $passed;
+		}
+
+		$capacity = ! empty( $tour_data['capacity'] ) && is_array( $tour_data['capacity'] )
+			? $tour_data['capacity']
+			: $this->resolve_booking_capacity_from_rates( $tour_data['prices'] ?? array() );
+		$minimum_pax = max( 0, (int) ( $capacity['minimum_pax'] ?? 0 ) );
+		$maximum_pax = max( 0, (int) ( $capacity['maximum_pax'] ?? 0 ) );
+		$available_pax_counts = array_map( 'intval', (array) ( $capacity['available_pax_counts'] ?? array() ) );
+
+		if ( $minimum_pax < 1 || $maximum_pax < 1 ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'This Joiner Tour is currently unavailable because no passenger rate is configured.', 'hotel-rates' ), 'error' );
+			}
+
+			return false;
+		}
+
+		$adults   = $this->get_tour_paid_guest_count_from_request();
+		$children = isset( $_POST['hr_tour_children'] ) ? max( 0, (int) wp_unslash( $_POST['hr_tour_children'] ) ) : 0;
+		$infants  = isset( $_POST['hr_tour_infants'] ) ? max( 0, (int) wp_unslash( $_POST['hr_tour_infants'] ) ) : 0;
+		$paid_pax = $adults + $children;
+		$total_pax = $paid_pax + $infants;
+
+		if ( $paid_pax < $minimum_pax ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: minimum number of paying guests */
+						__( 'This Joiner Tour requires a minimum of %d paying guests.', 'hotel-rates' ),
+						$minimum_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
+
+		if ( ! in_array( $paid_pax, $available_pax_counts, true ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: selected number of paying guests */
+						__( 'This Joiner Tour has no rate for %d paying guests.', 'hotel-rates' ),
+						$paid_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
+
+		if ( $total_pax > $maximum_pax ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice(
+					sprintf(
+						/* translators: %d: maximum number of guests */
+						__( 'This Joiner Tour accommodates a maximum of %d guests.', 'hotel-rates' ),
+						$maximum_pax
+					),
+					'error'
+				);
+			}
+
+			return false;
+		}
 
 		return $passed;
 	}
@@ -6666,7 +6842,7 @@ class Hotel_Rates_Booking {
                 $rate_guest_count = $this->get_tour_children_rate_guest_count( $pax, $children );
                 $unit_price = $tour_data['prices'][ (string) $rate_guest_count ] ?? null;
 
-                if ( null === $unit_price || '' === $unit_price ) {
+                if ( null === $unit_price || '' === $unit_price || ! is_numeric( $unit_price ) || (float) $unit_price <= 0 ) {
                         return false;
                 }
 
@@ -7449,6 +7625,28 @@ class Hotel_Rates_Booking {
                 return $label;
         }
 
+        private function resolve_booking_capacity_from_rates( $prices ) {
+                $available_pax_counts = array();
+
+                foreach ( (array) $prices as $pax => $rate ) {
+                        $pax = (int) $pax;
+
+                        if ( $pax > 0 && is_numeric( $rate ) && (float) $rate > 0 ) {
+                                $available_pax_counts[] = $pax;
+                        }
+                }
+
+                $available_pax_counts = array_values( array_unique( $available_pax_counts ) );
+                sort( $available_pax_counts, SORT_NUMERIC );
+
+                return array(
+                        'minimum_pax'         => ! empty( $available_pax_counts ) ? (int) min( $available_pax_counts ) : 0,
+                        'maximum_pax'         => ! empty( $available_pax_counts ) ? (int) max( $available_pax_counts ) : 0,
+                        'available_pax_counts' => $available_pax_counts,
+                        'bookable'            => ! empty( $available_pax_counts ),
+                );
+        }
+
         private function get_tour_booking_data( $tour_rate_id ) {
                 $tour_rate = Hotel_Rates_DB::get_tour_rate_by_id( $tour_rate_id );
 
@@ -7456,18 +7654,25 @@ class Hotel_Rates_Booking {
                         return null;
                 }
 
-                return array(
+                $prices = $this->extract_rate_prices( $tour_rate );
+                $tour_data = array(
                         'tourRateId' => (int) $tour_rate->id,
                         'tourName'   => $tour_rate->tour_name,
                         'type'       => $tour_rate->type,
                         'placeId'    => (int) $tour_rate->place_id,
                         'placeName'  => $tour_rate->place_name,
-                        'prices'     => $this->extract_rate_prices( $tour_rate ),
+                        'prices'     => $prices,
                         'childrenRates' => Hotel_Rates_DB::normalize_tour_children_rates( $tour_rate->children_rates ?? '' ),
                         'optionalAddons' => $this->get_tour_optional_addons_for_booking( $tour_rate ),
                         'transferRoutes' => $this->get_airport_transfer_routes_for_booking( $tour_rate->transfer_routes ?? '' ),
                         'bookingFields' => Hotel_Rates_DB::normalize_tour_booking_fields( $tour_rate->booking_fields ?? '' ),
                 );
+
+                if ( in_array( (string) $tour_rate->type, array( 'Day Tour', 'Joiner' ), true ) ) {
+                        $tour_data['capacity'] = $this->resolve_booking_capacity_from_rates( $prices );
+                }
+
+                return $tour_data;
         }
 
         private function get_motorbike_booking_data( $motorbike_rental_id ) {
@@ -7853,8 +8058,11 @@ class Hotel_Rates_Booking {
 
         private function extract_rate_prices( $row ) {
                 $prices = array();
+                $max_pax = is_object( $row ) && isset( $row->type ) && 'Day Tour' === (string) $row->type
+                        ? Hotel_Rates_DB::DAY_TOUR_MAX_PAX
+                        : Hotel_Rates_DB::MAX_PAX;
 
-                for ( $p = 1; $p <= Hotel_Rates_DB::MAX_PAX; $p++ ) {
+                for ( $p = 1; $p <= $max_pax; $p++ ) {
                         $col = 'pax_' . $p;
                         $prices[ (string) $p ] = isset( $row->$col ) && $row->$col !== null && $row->$col !== '' ? (float) $row->$col : null;
                 }

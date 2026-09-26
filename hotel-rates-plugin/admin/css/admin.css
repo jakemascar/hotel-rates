@@ -410,6 +410,53 @@
         margin-bottom: 20px;
 }
 
+.hr-day-tour-pax-range {
+        margin: 8px 0 18px;
+        padding: 16px;
+        border: 1px solid #dcdcde;
+        border-radius: 4px;
+        background: #f6f7f7;
+}
+
+.hr-day-tour-pax-range[hidden],
+.hr-modal-pax-cell.hr-day-tour-pax-outside-range {
+        display: none !important;
+}
+
+.hr-day-tour-pax-range h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+}
+
+.hr-day-tour-pax-range-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 28px;
+        margin-top: 14px;
+}
+
+.hr-day-tour-pax-range-controls label {
+        display: grid;
+        grid-template-columns: 32px 60px 32px;
+        align-items: center;
+        gap: 6px;
+}
+
+.hr-day-tour-pax-range-controls label > span {
+        grid-column: 1 / -1;
+        font-weight: 600;
+}
+
+.hr-day-tour-pax-range-controls input {
+        width: 60px;
+        text-align: center;
+}
+
+.hr-day-tour-pax-step {
+        min-width: 32px;
+        font-weight: 700;
+}
+
 .hr-modal-pax-cell label {
         display: block;
         font-size: 12px;

@@ -8423,8 +8423,481 @@
                 return !!tourData && tourData.type === 'Day Tour';
         }
 
+        function getDayTourCapacity(tourData) {
+                var capacity = tourData && tourData.capacity && typeof tourData.capacity === 'object' ? tourData.capacity : {};
+                var minimumPax = parseInt(capacity.minimum_pax, 10);
+                var maximumPax = parseInt(capacity.maximum_pax, 10);
+                var availablePaxCounts = Array.isArray(capacity.available_pax_counts) ? capacity.available_pax_counts.map(function (pax) {
+                        return parseInt(pax, 10);
+                }).filter(function (pax) {
+                        return Number.isFinite(pax) && pax > 0;
+                }) : [];
+
+                return {
+                        minimumPax: Number.isFinite(minimumPax) ? Math.max(0, minimumPax) : 0,
+                        maximumPax: Number.isFinite(maximumPax) ? Math.max(0, maximumPax) : 0,
+                        availablePaxCounts: availablePaxCounts,
+                        bookable: !!capacity.bookable && Number.isFinite(minimumPax) && minimumPax > 0 && Number.isFinite(maximumPax) && maximumPax > 0
+                };
+        }
+
+        function getDayTourPaidGuestCount($form, tourData) {
+                var children = isTourChildrenEnabled($form, tourData) ? getTourChildCount($form) : 0;
+
+                return getTourPaidGuestCount($form) + children;
+        }
+
+        function getDayTourTotalGuestCount($form, tourData) {
+                return getDayTourPaidGuestCount($form, tourData) + getTourInfantCount($form);
+        }
+
+        function getDayTourMinimumPaxMessage(minimumPax) {
+                var template = window.hrBooking && window.hrBooking.dayTourMinimumPaxLabel
+                        ? window.hrBooking.dayTourMinimumPaxLabel
+                        : 'This tour requires a minimum of %d paying guests.';
+
+                return template.replace('%d', String(minimumPax));
+        }
+
+        function getDayTourMaximumPaxMessage(maximumPax) {
+                var template = window.hrBooking && window.hrBooking.dayTourMaximumPaxLabel
+                        ? window.hrBooking.dayTourMaximumPaxLabel
+                        : 'This tour accommodates a maximum of %d guests.';
+
+                return template.replace('%d', String(maximumPax));
+        }
+
+        function getDayTourUnavailablePaxMessage(paidPax) {
+                var template = window.hrBooking && window.hrBooking.dayTourUnavailablePaxLabel
+                        ? window.hrBooking.dayTourUnavailablePaxLabel
+                        : 'This tour has no rate for %d paying guests.';
+
+                return template.replace('%d', String(paidPax));
+        }
+
+        function initializeDayTourMinimumPax($form, tourData) {
+                var capacity = getDayTourCapacity(tourData);
+                var children;
+                var currentAdults;
+                var targetAdults;
+
+                if (!capacity.bookable || $form.data('hr-day-tour-minimum-initialized')) {
+                        return;
+                }
+
+                $form.data('hr-day-tour-minimum-initialized', true);
+                children = isTourChildrenEnabled($form, tourData) ? getTourChildCount($form) : 0;
+                currentAdults = getTourPaidGuestCount($form);
+
+                if (currentAdults + children >= capacity.minimumPax) {
+                        return;
+                }
+
+                targetAdults = Math.max(1, capacity.minimumPax - children);
+                $form.find('input[name="ovabrw_adults"]').not('[data-hr-tour-zero-guest="1"]')
+                        .val(String(targetAdults))
+                        .attr('value', String(targetAdults));
+        }
+
+        function setDayTourCapacityMessage($form, message) {
+                var $field = $form.find('.hr-day-tour-booking-field').first();
+                var $message = $field.find('.hr-day-tour-capacity-message').first();
+
+                if (!$field.length) {
+                        return;
+                }
+
+                if (!$message.length) {
+                        $message = $('<p>', {
+                                class: 'hr-day-tour-capacity-message',
+                                role: 'alert',
+                                'aria-live': 'polite',
+                                hidden: true
+                        }).insertBefore($field.find('.hr-tour-booking-total').first());
+                }
+
+                $message
+                        .text(message || '')
+                        .prop('hidden', !message)
+                        .toggleClass('is-visible', !!message);
+        }
+
+        function getDayTourPaidMinusControls($form) {
+                return $form.find('.guests-icon.minus, .guests-icon.guests-minus, .guests-minus').filter(function () {
+                        var $row = $(this).closest('.guests-buttons');
+
+                        return $row.find('input[name="ovabrw_adults"]').not('[data-hr-tour-zero-guest="1"]').length > 0 ||
+                                $row.find('.hr-tour-child-count').length > 0;
+                });
+        }
+
+        function syncDayTourCapacityControls($form, tourData) {
+                var capacity;
+                var minimumPax;
+                var maximumPax;
+                var adults;
+                var children;
+                var infants;
+                var paidPax;
+                var total;
+                var hasRate;
+                var valid;
+                var $plusControls;
+                var $minusControls;
+                var $submitControls;
+
+                tourData = getTourDataForForm($form, tourData);
+
+                if (!isDayTourData(tourData)) {
+                        return true;
+                }
+
+                capacity = getDayTourCapacity(tourData);
+                minimumPax = capacity.minimumPax;
+                maximumPax = capacity.maximumPax;
+                adults = getTourPaidGuestCount($form);
+                children = isTourChildrenEnabled($form, tourData) ? getTourChildCount($form) : 0;
+                infants = getTourInfantCount($form);
+                paidPax = adults + children;
+                total = paidPax + infants;
+                hasRate = capacity.availablePaxCounts.indexOf(paidPax) !== -1;
+                valid = capacity.bookable && paidPax >= minimumPax && total <= maximumPax && hasRate;
+                $plusControls = $form.find('.ovabrw-wrapper-guestspicker .guests-icon.plus, .ovabrw-wrapper-guestspicker .guests-icon.guests-plus, .ovabrw-wrapper-guestspicker .guests-plus');
+                $minusControls = getDayTourPaidMinusControls($form);
+                $submitControls = $form.find('button[type=submit], input[type=submit], .single_add_to_cart_button, .booking-form-submit');
+
+                getTourAdultGuestInput($form).attr('max', Math.max(0, maximumPax - children - infants));
+                $form.find('.hr-tour-child-count').attr('max', Math.max(0, maximumPax - adults - infants));
+                $form.find('.hr-tour-infant-count').attr('max', Math.max(0, maximumPax - adults - children));
+
+                $plusControls
+                        .toggleClass('hr-day-tour-capacity-disabled', !capacity.bookable || total >= maximumPax)
+                        .attr('aria-disabled', !capacity.bookable || total >= maximumPax ? 'true' : 'false');
+
+                $minusControls
+                        .toggleClass('hr-day-tour-capacity-disabled', capacity.bookable && paidPax <= minimumPax)
+                        .attr('aria-disabled', capacity.bookable && paidPax <= minimumPax ? 'true' : 'false');
+
+                if (!capacity.bookable) {
+                        setDayTourCapacityMessage($form, window.hrBooking && window.hrBooking.dayTourUnavailableLabel
+                                ? window.hrBooking.dayTourUnavailableLabel
+                                : 'This tour is currently unavailable because no passenger rate is configured.');
+                } else if (paidPax < minimumPax) {
+                        setDayTourCapacityMessage($form, getDayTourMinimumPaxMessage(minimumPax));
+                } else if (!hasRate) {
+                        setDayTourCapacityMessage($form, getDayTourUnavailablePaxMessage(paidPax));
+                } else if (total > maximumPax) {
+                        setDayTourCapacityMessage($form, getDayTourMaximumPaxMessage(maximumPax));
+                } else if (total >= maximumPax) {
+                        setDayTourCapacityMessage($form, getDayTourMaximumPaxMessage(maximumPax));
+                } else {
+                        setDayTourCapacityMessage($form, '');
+                }
+
+                if (!valid) {
+                        $submitControls
+                                .attr('data-hr-day-tour-capacity-disabled', '1')
+                                .prop('disabled', true)
+                                .addClass('disabled');
+                } else {
+                        $submitControls.filter('[data-hr-day-tour-capacity-disabled=1]')
+                                .removeAttr('data-hr-day-tour-capacity-disabled')
+                                .prop('disabled', false)
+                                .removeClass('disabled');
+                }
+
+                $form.data('hr-day-tour-capacity-valid', valid);
+
+                return valid;
+        }
+
+        function bindDayTourCapacityGuard($form, tourData) {
+                var formElement = $form[0];
+
+                if (!isDayTourData(tourData) || !formElement || $form.data('hr-day-tour-capacity-guard-bound')) {
+                        return;
+                }
+
+                $form.data('hr-day-tour-capacity-guard-bound', true);
+
+                formElement.addEventListener('click', function (event) {
+                        var $control = $(event.target).closest('.guests-icon.plus, .guests-icon.guests-plus, .guests-plus, .guests-icon.minus, .guests-icon.guests-minus, .guests-minus');
+                        var capacity = getDayTourCapacity(tourData);
+                        var isPlus;
+                        var isMinus;
+                        var paidPax;
+                        var total;
+                        var message = '';
+
+                        if (!$control.length || !$.contains(formElement, $control[0])) {
+                                return;
+                        }
+
+                        isPlus = $control.hasClass('plus') || $control.hasClass('guests-plus');
+                        isMinus = $control.hasClass('minus') || $control.hasClass('guests-minus');
+                        paidPax = getDayTourPaidGuestCount($form, tourData);
+                        total = getDayTourTotalGuestCount($form, tourData);
+
+                        if (!capacity.bookable && isPlus) {
+                                message = window.hrBooking && window.hrBooking.dayTourUnavailableLabel
+                                        ? window.hrBooking.dayTourUnavailableLabel
+                                        : 'This tour is currently unavailable because no passenger rate is configured.';
+                        } else if (isPlus && total >= capacity.maximumPax) {
+                                message = getDayTourMaximumPaxMessage(capacity.maximumPax);
+                        } else if (isMinus && paidPax <= capacity.minimumPax && getDayTourPaidMinusControls($form).is($control)) {
+                                message = getDayTourMinimumPaxMessage(capacity.minimumPax);
+                        }
+
+                        if (!message) {
+                                return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (event.stopImmediatePropagation) {
+                                event.stopImmediatePropagation();
+                        }
+
+                        syncDayTourCapacityControls($form, tourData);
+                        setDayTourCapacityMessage($form, message);
+                }, true);
+
+                formElement.addEventListener('submit', function (event) {
+                        if (syncDayTourCapacityControls($form, tourData)) {
+                                return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (event.stopImmediatePropagation) {
+                                event.stopImmediatePropagation();
+                        }
+                }, true);
+        }
+
         function isJoinerTourData(tourData) {
                 return !!tourData && tourData.type === 'Joiner';
+        }
+
+        function getJoinerMinimumPaxMessage(minimumPax) {
+                var template = window.hrBooking && window.hrBooking.joinerMinimumPaxLabel
+                        ? window.hrBooking.joinerMinimumPaxLabel
+                        : 'This Joiner Tour requires a minimum of %d paying guests.';
+
+                return template.replace('%d', String(minimumPax));
+        }
+
+        function getJoinerMaximumPaxMessage(maximumPax) {
+                var template = window.hrBooking && window.hrBooking.joinerMaximumPaxLabel
+                        ? window.hrBooking.joinerMaximumPaxLabel
+                        : 'This Joiner Tour accommodates a maximum of %d guests.';
+
+                return template.replace('%d', String(maximumPax));
+        }
+
+        function getJoinerUnavailablePaxMessage(paidPax) {
+                var template = window.hrBooking && window.hrBooking.joinerUnavailablePaxLabel
+                        ? window.hrBooking.joinerUnavailablePaxLabel
+                        : 'This Joiner Tour has no rate for %d paying guests.';
+
+                return template.replace('%d', String(paidPax));
+        }
+
+        function initializeJoinerMinimumPax($form, tourData) {
+                var capacity = getDayTourCapacity(tourData);
+                var children;
+                var currentAdults;
+                var targetAdults;
+
+                if (!capacity.bookable || $form.data('hr-joiner-minimum-initialized')) {
+                        return;
+                }
+
+                $form.data('hr-joiner-minimum-initialized', true);
+                children = isTourChildrenEnabled($form, tourData) ? getTourChildCount($form) : 0;
+                currentAdults = getTourPaidGuestCount($form);
+
+                if (currentAdults + children >= capacity.minimumPax) {
+                        return;
+                }
+
+                targetAdults = Math.max(1, capacity.minimumPax - children);
+                $form.find('input[name="ovabrw_adults"]').not('[data-hr-tour-zero-guest="1"]')
+                        .val(String(targetAdults))
+                        .attr('value', String(targetAdults));
+        }
+
+        function setJoinerCapacityMessage($form, message) {
+                var $field = $form.find('.hr-joiner-booking-field').first();
+                var $message = $field.find('.hr-joiner-capacity-message').first();
+
+                if (!$field.length) {
+                        return;
+                }
+
+                if (!$message.length) {
+                        $message = $('<p>', {
+                                class: 'hr-joiner-capacity-message',
+                                role: 'alert',
+                                'aria-live': 'polite',
+                                hidden: true
+                        }).insertBefore($field.find('.hr-tour-booking-total').first());
+                }
+
+                $message
+                        .text(message || '')
+                        .prop('hidden', !message)
+                        .toggleClass('is-visible', !!message);
+        }
+
+        function getJoinerPaidMinusControls($form) {
+                return $form.find('.guests-icon.minus, .guests-icon.guests-minus, .guests-minus').filter(function () {
+                        var $row = $(this).closest('.guests-buttons');
+
+                        return $row.find('input[name="ovabrw_adults"]').not('[data-hr-tour-zero-guest="1"]').length > 0 ||
+                                $row.find('.hr-tour-child-count').length > 0;
+                });
+        }
+
+        function syncJoinerCapacityControls($form, tourData) {
+                var capacity;
+                var adults;
+                var children;
+                var infants;
+                var paidPax;
+                var total;
+                var hasRate;
+                var valid;
+                var $plusControls;
+                var $minusControls;
+                var $submitControls;
+
+                tourData = getTourDataForForm($form, tourData);
+
+                if (!isJoinerTourData(tourData)) {
+                        return true;
+                }
+
+                capacity = getDayTourCapacity(tourData);
+                adults = getTourPaidGuestCount($form);
+                children = isTourChildrenEnabled($form, tourData) ? getTourChildCount($form) : 0;
+                infants = getTourInfantCount($form);
+                paidPax = adults + children;
+                total = paidPax + infants;
+                hasRate = capacity.availablePaxCounts.indexOf(paidPax) !== -1;
+                valid = capacity.bookable && paidPax >= capacity.minimumPax && total <= capacity.maximumPax && hasRate;
+                $plusControls = $form.find('.ovabrw-wrapper-guestspicker .guests-icon.plus, .ovabrw-wrapper-guestspicker .guests-icon.guests-plus, .ovabrw-wrapper-guestspicker .guests-plus');
+                $minusControls = getJoinerPaidMinusControls($form);
+                $submitControls = $form.find('button[type=submit], input[type=submit], .single_add_to_cart_button, .booking-form-submit');
+
+                getTourAdultGuestInput($form).attr('max', Math.max(0, capacity.maximumPax - children - infants));
+                $form.find('.hr-tour-child-count').attr('max', Math.max(0, capacity.maximumPax - adults - infants));
+                $form.find('.hr-tour-infant-count').attr('max', Math.max(0, capacity.maximumPax - adults - children));
+
+                $plusControls
+                        .toggleClass('hr-joiner-capacity-disabled', !capacity.bookable || total >= capacity.maximumPax)
+                        .attr('aria-disabled', !capacity.bookable || total >= capacity.maximumPax ? 'true' : 'false');
+
+                $minusControls
+                        .toggleClass('hr-joiner-capacity-disabled', capacity.bookable && paidPax <= capacity.minimumPax)
+                        .attr('aria-disabled', capacity.bookable && paidPax <= capacity.minimumPax ? 'true' : 'false');
+
+                if (!capacity.bookable) {
+                        setJoinerCapacityMessage($form, window.hrBooking && window.hrBooking.joinerUnavailableLabel
+                                ? window.hrBooking.joinerUnavailableLabel
+                                : 'This Joiner Tour is currently unavailable because no passenger rate is configured.');
+                } else if (paidPax < capacity.minimumPax) {
+                        setJoinerCapacityMessage($form, getJoinerMinimumPaxMessage(capacity.minimumPax));
+                } else if (!hasRate) {
+                        setJoinerCapacityMessage($form, getJoinerUnavailablePaxMessage(paidPax));
+                } else if (total >= capacity.maximumPax) {
+                        setJoinerCapacityMessage($form, getJoinerMaximumPaxMessage(capacity.maximumPax));
+                } else {
+                        setJoinerCapacityMessage($form, '');
+                }
+
+                if (!valid) {
+                        $submitControls
+                                .attr('data-hr-joiner-capacity-disabled', '1')
+                                .prop('disabled', true)
+                                .addClass('disabled');
+                } else {
+                        $submitControls.filter('[data-hr-joiner-capacity-disabled="1"]')
+                                .removeAttr('data-hr-joiner-capacity-disabled')
+                                .prop('disabled', false)
+                                .removeClass('disabled');
+                }
+
+                $form.data('hr-joiner-capacity-valid', valid);
+                return valid;
+        }
+
+        function bindJoinerCapacityGuard($form, tourData) {
+                var formElement = $form[0];
+
+                if (!isJoinerTourData(tourData) || !formElement || $form.data('hr-joiner-capacity-guard-bound')) {
+                        return;
+                }
+
+                $form.data('hr-joiner-capacity-guard-bound', true);
+
+                formElement.addEventListener('click', function (event) {
+                        var $control = $(event.target).closest('.guests-icon.plus, .guests-icon.guests-plus, .guests-plus, .guests-icon.minus, .guests-icon.guests-minus, .guests-minus');
+                        var capacity = getDayTourCapacity(tourData);
+                        var isPlus;
+                        var isMinus;
+                        var paidPax;
+                        var total;
+                        var message = '';
+
+                        if (!$control.length || !$.contains(formElement, $control[0])) {
+                                return;
+                        }
+
+                        isPlus = $control.hasClass('plus') || $control.hasClass('guests-plus');
+                        isMinus = $control.hasClass('minus') || $control.hasClass('guests-minus');
+                        paidPax = getDayTourPaidGuestCount($form, tourData);
+                        total = getDayTourTotalGuestCount($form, tourData);
+
+                        if (!capacity.bookable && isPlus) {
+                                message = window.hrBooking && window.hrBooking.joinerUnavailableLabel
+                                        ? window.hrBooking.joinerUnavailableLabel
+                                        : 'This Joiner Tour is currently unavailable because no passenger rate is configured.';
+                        } else if (isPlus && total >= capacity.maximumPax) {
+                                message = getJoinerMaximumPaxMessage(capacity.maximumPax);
+                        } else if (isMinus && paidPax <= capacity.minimumPax && getJoinerPaidMinusControls($form).is($control)) {
+                                message = getJoinerMinimumPaxMessage(capacity.minimumPax);
+                        }
+
+                        if (!message) {
+                                return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (event.stopImmediatePropagation) {
+                                event.stopImmediatePropagation();
+                        }
+
+                        syncJoinerCapacityControls($form, tourData);
+                        setJoinerCapacityMessage($form, message);
+                }, true);
+
+                formElement.addEventListener('submit', function (event) {
+                        if (syncJoinerCapacityControls($form, tourData)) {
+                                return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (event.stopImmediatePropagation) {
+                                event.stopImmediatePropagation();
+                        }
+                }, true);
         }
 
         function isChildRateTourData(tourData) {
@@ -9096,6 +9569,7 @@
                 var childTotal = 0;
                 var addons;
                 var total = 0;
+                var capacityIsValid;
 
                 if (!$field.length) {
                         $field = $form.find('.hr-tour-booking-field').first();
@@ -9110,6 +9584,7 @@
                 syncTourFreeGuestRows($form, tourData);
                 syncTourChildrenHidden($form);
                 syncTourInfantHidden($form);
+                capacityIsValid = syncDayTourCapacityControls($form, tourData);
 
                 if (!guestCount) {
                         $field.find('input[name="hr_tour_pax"]').val('');
@@ -9129,7 +9604,7 @@
                         return false;
                 }
 
-                if (rateGuestCount < 1 || unitPrice === null || typeof unitPrice === 'undefined' || Number.isNaN(Number(unitPrice)) || (childCount > 0 && childUnitPrice === null)) {
+                if (!capacityIsValid || rateGuestCount < 1 || unitPrice === null || typeof unitPrice === 'undefined' || Number.isNaN(Number(unitPrice)) || Number(unitPrice) <= 0 || (childCount > 0 && childUnitPrice === null)) {
                         $field.find('input[name="hr_tour_pax"]').val('');
                         $field.find('input[name="hr_tour_unit_price"]').val('');
                         $field.find('input[name="hr_tour_children_unit_price"]').val('');
@@ -9137,7 +9612,7 @@
                         $field.find('input[name="hr_tour_addons_payload"]').val('');
                         $field.find('input[name="hr_tour_total"]').val('');
                         $field.find('.hr-tour-addon-select').prop('disabled', true);
-                        $total.text(window.hrBooking ? window.hrBooking.tourInvalidLabel : '');
+                        $total.text(capacityIsValid && window.hrBooking ? window.hrBooking.tourInvalidLabel : '');
                         $form.data('hr-tour-total', 0);
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
@@ -9166,6 +9641,7 @@
                 $form.data('hr-tour-unit-price-valid', true);
                 syncTourBookingTotalDisplay($form);
                 syncTourGuestRateDisplays($form, tourData);
+                syncDayTourCapacityControls($form, tourData);
                 syncTourAjaxTotal($form);
                 return true;
         }
@@ -9182,6 +9658,7 @@
                 var childTotal = 0;
                 var addons;
                 var total = 0;
+                var capacityIsValid = true;
 
                 if (isDayTourData(tourData)) {
                         return updateDayTourSelection($form, tourData);
@@ -9194,6 +9671,10 @@
                 syncTourFreeGuestRows($form);
                 syncTourChildrenHidden($form);
                 syncTourInfantHidden($form);
+
+                if (isJoinerTourData(tourData)) {
+                        capacityIsValid = syncJoinerCapacityControls($form, tourData);
+                }
 
                 if (!guestCount) {
                         $field.find('input[name="hr_tour_pax"]').val('');
@@ -9213,7 +9694,7 @@
                         return false;
                 }
 
-                if (rateGuestCount < 1 || unitPrice === null || typeof unitPrice === 'undefined' || Number.isNaN(Number(unitPrice)) || (childCount > 0 && childUnitPrice === null)) {
+                if (!capacityIsValid || rateGuestCount < 1 || unitPrice === null || typeof unitPrice === 'undefined' || Number.isNaN(Number(unitPrice)) || Number(unitPrice) <= 0 || (childCount > 0 && childUnitPrice === null)) {
                         $field.find('input[name="hr_tour_pax"]').val('');
                         $field.find('input[name="hr_tour_unit_price"]').val('');
                         $field.find('input[name="hr_tour_children_unit_price"]').val('');
@@ -9221,7 +9702,7 @@
                         $field.find('input[name="hr_tour_addons_payload"]').val('');
                         $field.find('input[name="hr_tour_total"]').val('');
                         $field.find('.hr-tour-addon-select').prop('disabled', true);
-                        $total.text(window.hrBooking ? window.hrBooking.tourInvalidLabel : '');
+                        $total.text(capacityIsValid && window.hrBooking ? window.hrBooking.tourInvalidLabel : '');
                         $form.data('hr-tour-total', 0);
                         $form.data('hr-tour-total-valid', false);
                         $form.data('hr-tour-unit-price', 0);
@@ -9250,6 +9731,7 @@
                 $form.data('hr-tour-unit-price-valid', true);
                 syncTourBookingTotalDisplay($form);
                 syncTourGuestRateDisplays($form, tourData);
+                syncJoinerCapacityControls($form, tourData);
                 syncTourAjaxTotal($form);
                 return true;
         }
@@ -9264,12 +9746,15 @@
                         .data('hr-tour-data', tourData)
                         .data('hr-day-tour-data', tourData);
 
+                initializeDayTourMinimumPax($form, tourData);
                 hideTourAjaxTotal($form);
                 renderTourAddonSelectors($form, tourData);
                 syncTourFreeGuestRows($form, tourData);
+                bindDayTourCapacityGuard($form, tourData);
                 bindTourFreeGuestButtonCapture($form);
                 bindTourFreeGuestRowsObserver($form);
                 bindDayTourAjaxGuestRowsSync($form);
+                syncDayTourCapacityControls($form, tourData);
                 updateDayTourSelection($form, tourData);
                 scheduleTourFreeGuestRowsSync($form);
                 scheduleTourAjaxTotalSync($form);
@@ -9378,12 +9863,15 @@
                         .data('hr-tour-data', tourData)
                         .data('hr-joiner-tour-data', tourData);
 
+                initializeJoinerMinimumPax($form, tourData);
                 hideTourAjaxTotal($form);
                 renderTourAddonSelectors($form, tourData);
                 syncTourFreeGuestRows($form, tourData);
+                bindJoinerCapacityGuard($form, tourData);
                 bindTourFreeGuestButtonCapture($form);
                 bindTourFreeGuestRowsObserver($form);
                 bindJoinerTourAjaxGuestRowsSync($form);
+                syncJoinerCapacityControls($form, tourData);
                 updateTourSelection($form, tourData);
                 scheduleTourFreeGuestRowsSync($form);
                 scheduleTourAjaxTotalSync($form);
