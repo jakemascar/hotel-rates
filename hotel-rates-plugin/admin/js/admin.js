@@ -94,6 +94,7 @@
                         var $row = $(this);
 
                         $row.find('.hr-motorbike-model-name').attr('name', 'models[' + index + '][name]');
+                        $row.find('.hr-motorbike-model-engine').attr('name', 'models[' + index + '][engine]');
                         $row.find('.hr-motorbike-model-rate').attr('name', 'models[' + index + '][rate]');
                         $row.find('.hr-motorbike-model-stock').attr('name', 'models[' + index + '][stock]');
                 });
@@ -106,6 +107,7 @@
 
                 html += '<tr class="hr-motorbike-model-row">';
                 html += '<td><input type="text" name="models[' + index + '][name]" value="" class="widefat hr-motorbike-model-name" placeholder="Yamaha Fazzio" required></td>';
+                html += '<td><input type="text" name="models[' + index + '][engine]" value="" class="widefat hr-motorbike-model-engine" placeholder="e.g., 125cc" required></td>';
                 html += '<td><input type="number" name="models[' + index + '][rate]" value="" class="widefat hr-motorbike-model-rate" step="0.01" min="0" placeholder="0.00" required></td>';
                 html += '<td><input type="number" name="models[' + index + '][stock]" value="1" class="widefat hr-motorbike-model-stock" step="1" min="1" required></td>';
                 html += '<td><button type="button" class="button-link-delete hr-motorbike-model-remove">Remove</button></td>';
@@ -140,6 +142,7 @@
                         $row.find('.hr-self-drive-vehicle-name').attr('name', 'vehicles[' + index + '][name]');
                         $row.find('.hr-self-drive-vehicle-rate').attr('name', 'vehicles[' + index + '][rate]');
                         $row.find('.hr-self-drive-vehicle-stock').attr('name', 'vehicles[' + index + '][stock]');
+                        $row.find('.hr-self-drive-vehicle-seaters').attr('name', 'vehicles[' + index + '][seaters]');
                 });
         }
 
@@ -152,6 +155,7 @@
                 html += '<td><input type="text" name="vehicles[' + index + '][name]" value="" class="widefat hr-self-drive-vehicle-name" placeholder="Toyota Vios" required></td>';
                 html += '<td><input type="number" name="vehicles[' + index + '][rate]" value="" class="widefat hr-self-drive-vehicle-rate" step="0.01" min="0" placeholder="0.00" required></td>';
                 html += '<td><input type="number" name="vehicles[' + index + '][stock]" value="1" class="widefat hr-self-drive-vehicle-stock" step="1" min="1" required></td>';
+                html += '<td><input type="text" name="vehicles[' + index + '][seaters]" value="5" class="widefat hr-self-drive-vehicle-seaters" pattern="[0-9]+(-[0-9]+)?" placeholder="5 or 7-8" required></td>';
                 html += '<td><button type="button" class="button-link-delete hr-self-drive-vehicle-remove">Remove</button></td>';
                 html += '</tr>';
 
@@ -166,6 +170,7 @@
                 if ( $rows.length <= 1 ) {
                         $(this).closest('.hr-self-drive-vehicle-row').find('input').val('');
                         $(this).closest('.hr-self-drive-vehicle-row').find('.hr-self-drive-vehicle-stock').val('1');
+                        $(this).closest('.hr-self-drive-vehicle-row').find('.hr-self-drive-vehicle-seaters').val('5');
                 } else {
                         $(this).closest('.hr-self-drive-vehicle-row').remove();
                 }

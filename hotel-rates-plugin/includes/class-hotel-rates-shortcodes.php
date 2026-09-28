@@ -26,6 +26,11 @@ class Hotel_Rates_Shortcodes {
                 add_shortcode( 'tour_day_rate_table', array( $this, 'tour_rate_table' ) );
                 add_shortcode( 'package_deal_hotel_rates', array( $this, 'package_deal_hotel_rates_table' ) );
                 add_shortcode( 'specific_tour_rates', array( $this, 'specific_tour_rates_table' ) );
+                add_shortcode( 'specific_port_transfer_rates', array( $this, 'specific_port_transfer_rates_table' ) );
+                add_shortcode( 'specific_destination_tour_rates', array( $this, 'specific_destination_tour_rates_table' ) );
+                add_shortcode( 'specific_self_drive_rates', array( $this, 'specific_self_drive_rates_table' ) );
+                add_shortcode( 'specific_motorbike_rates', array( $this, 'specific_motorbike_rates_table' ) );
+                add_shortcode( 'specific_boat_rates', array( $this, 'specific_boat_rates_table' ) );
                 add_filter( 'tripgo_get_meta_data', array( $this, 'render_specific_tour_rates_in_tripgo_plan' ), 10, 4 );
                 add_action( 'wp_enqueue_scripts',     array( $this, 'enqueue_styles' ) );
         }
@@ -56,12 +61,17 @@ class Hotel_Rates_Shortcodes {
         public function render_specific_tour_rates_in_content( $content ) {
                 if (
                         false === strpos( $content, '[specific_tour_rates' ) &&
-                        false === strpos( $content, '[package_deal_hotel_rates' )
+                        false === strpos( $content, '[package_deal_hotel_rates' ) &&
+                        false === strpos( $content, '[specific_port_transfer_rates' ) &&
+                        false === strpos( $content, '[specific_destination_tour_rates' ) &&
+                        false === strpos( $content, '[specific_self_drive_rates' ) &&
+                        false === strpos( $content, '[specific_motorbike_rates' ) &&
+                        false === strpos( $content, '[specific_boat_rates' )
                 ) {
                         return $content;
                 }
 
-                $pattern = get_shortcode_regex( array( 'specific_tour_rates', 'package_deal_hotel_rates' ) );
+                $pattern = get_shortcode_regex( array( 'specific_tour_rates', 'package_deal_hotel_rates', 'specific_port_transfer_rates', 'specific_destination_tour_rates', 'specific_self_drive_rates', 'specific_motorbike_rates', 'specific_boat_rates' ) );
 
                 return preg_replace_callback(
                         '/' . $pattern . '/s',
@@ -622,6 +632,469 @@ class Hotel_Rates_Shortcodes {
                 }
 
                 return $html . '</tbody></table></div></div>';
+        }
+
+        /**
+         * Display the rate matrix linked to a Port Transfer product.
+         *
+         * Usage:
+         *   [specific_port_transfer_rates]
+         *   [specific_port_transfer_rates port_transfer_id=123]
+         *   [specific_port_transfer_rates product_id=456]
+         */
+        public function specific_port_transfer_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'port_transfer_id' => 0,
+                        'product_id'       => 0,
+                ), $atts, 'specific_port_transfer_rates' );
+
+                $port_transfer_id = absint( $atts['port_transfer_id'] );
+                $product_id       = absint( $atts['product_id'] );
+
+                if ( ! $port_transfer_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $port_transfer_id = (int) get_post_meta( $product_id, '_hr_port_transfer_id', true );
+                        }
+                }
+
+                if ( ! $port_transfer_id ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'No Port Transfer is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $port_transfer = Hotel_Rates_DB::get_port_transfer( $port_transfer_id );
+
+                if ( ! $port_transfer ) {
+                        return '<p class=hr-sc-error>' . esc_html__( 'The selected Port Transfer could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $config      = Hotel_Rates_DB::normalize_port_transfer_config( $port_transfer->routes ?? '[]' );
+                $rate_groups = $this->group_specific_port_transfer_rates( $config );
+
+                if ( empty( $rate_groups ) ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'This Port Transfer does not currently have rates configured.', 'hotel-rates' ) . '</p>';
+                }
+
+                ob_start();
+                ?>
+                <div class='hr-sc-wrap hr-specific-port-transfer-rates' data-port-transfer-id='<?php echo esc_attr( $port_transfer_id ); ?>'>
+                        <?php foreach ( $rate_groups as $rate_group ) : ?>
+                                <?php $source_label = implode( ' & ', $rate_group['sources'] ); ?>
+                                <div class='hr-port-transfer-rate-group'>
+                                        <div class='hr-sc-table-overflow'>
+                                                <table class='hr-sc-table hr-port-transfer-rate-table'>
+                                                        <colgroup>
+                                                                <col class='hr-port-transfer-route-col'>
+                                                                <col class='hr-port-transfer-price-col'>
+                                                        </colgroup>
+                                                        <thead>
+                                                                <tr>
+                                                                        <th scope='col' class='hr-port-transfer-route-heading'><?php echo esc_html( sprintf( __( 'To/From %s:', 'hotel-rates' ), $source_label ) ); ?></th>
+                                                                        <th scope='col' class='hr-port-transfer-rate-heading'><?php esc_html_e( 'Rates', 'hotel-rates' ); ?></th>
+                                                                </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                                <?php foreach ( $rate_group['rows'] as $rate_row ) : ?>
+                                                                        <tr>
+                                                                                <td class='hr-port-transfer-route'><?php echo esc_html( $rate_row['destination'] ); ?></td>
+                                                                                <td class='hr-port-transfer-price'><?php echo wp_kses_post( Hotel_Rates_Currency::format_display_price( $rate_row['rate'] ) ); ?></td>
+                                                                        </tr>
+                                                                <?php endforeach; ?>
+                                                        </tbody>
+                                                </table>
+                                        </div>
+                                </div>
+                        <?php endforeach; ?>
+                </div>
+                <?php
+
+                return ob_get_clean();
+        }
+
+        /**
+         * Combine source locations when their destination rate matrices match.
+         */
+        private function group_specific_port_transfer_rates( $config ) {
+                $from_options = isset( $config['fromOptions'] ) && is_array( $config['fromOptions'] ) ? $config['fromOptions'] : array();
+                $to_options   = isset( $config['toOptions'] ) && is_array( $config['toOptions'] ) ? $config['toOptions'] : array();
+                $rates        = isset( $config['rates'] ) && is_array( $config['rates'] ) ? $config['rates'] : array();
+                $rate_lookup  = array();
+                $groups       = array();
+                $group_lookup = array();
+
+                foreach ( $rates as $rate ) {
+                        if ( ! is_array( $rate ) || ! isset( $rate['from'], $rate['to'], $rate['rate'] ) || ! is_numeric( $rate['rate'] ) ) {
+                                continue;
+                        }
+
+                        $rate_lookup[ (string) $rate['from'] ][ (string) $rate['to'] ] = (float) $rate['rate'];
+                }
+
+                foreach ( $from_options as $source ) {
+                        $rows = array();
+
+                        foreach ( $to_options as $destination ) {
+                                if ( ! isset( $rate_lookup[ $source ] ) || ! array_key_exists( $destination, $rate_lookup[ $source ] ) ) {
+                                        continue;
+                                }
+
+                                $rows[] = array(
+                                        'destination' => (string) $destination,
+                                        'rate'        => (float) $rate_lookup[ $source ][ $destination ],
+                                );
+                        }
+
+                        if ( empty( $rows ) ) {
+                                continue;
+                        }
+
+                        $signature = wp_json_encode( $rows );
+
+                        if ( isset( $group_lookup[ $signature ] ) ) {
+                                $groups[ $group_lookup[ $signature ] ]['sources'][] = (string) $source;
+                                continue;
+                        }
+
+                        $group_lookup[ $signature ] = count( $groups );
+                        $groups[] = array(
+                                'sources' => array( (string) $source ),
+                                'rows'    => $rows,
+                        );
+                }
+
+                return $groups;
+        }
+
+        /**
+         * Display the destination rates linked to a Destination Tour product.
+         *
+         * Usage:
+         *   [specific_destination_tour_rates]
+         *   [specific_destination_tour_rates destination_tour_id=123]
+         *   [specific_destination_tour_rates product_id=456]
+         */
+        public function specific_destination_tour_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'destination_tour_id' => 0,
+                        'product_id'          => 0,
+                ), $atts, 'specific_destination_tour_rates' );
+
+                $destination_tour_id = absint( $atts['destination_tour_id'] );
+                $product_id          = absint( $atts['product_id'] );
+
+                if ( ! $destination_tour_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $destination_tour_id = (int) get_post_meta( $product_id, '_hr_destination_tour_id', true );
+                        }
+                }
+
+                if ( ! $destination_tour_id ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'No Destination Tour is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $destination_tour = Hotel_Rates_DB::get_destination_tour( $destination_tour_id );
+
+                if ( ! $destination_tour ) {
+                        return '<p class=hr-sc-error>' . esc_html__( 'The selected Destination Tour could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $destinations = json_decode( $destination_tour->destinations ?? '[]', true );
+                $destinations = Hotel_Rates_DB::normalize_destination_tour_destinations( is_array( $destinations ) ? $destinations : array() );
+
+                if ( empty( $destinations ) ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'This Destination Tour does not currently have rates configured.', 'hotel-rates' ) . '</p>';
+                }
+
+                ob_start();
+                ?>
+                <div class='hr-sc-wrap hr-specific-destination-tour-rates' data-destination-tour-id='<?php echo esc_attr( $destination_tour_id ); ?>'>
+                        <div class='hr-sc-table-overflow'>
+                                <table class='hr-sc-table hr-destination-tour-rate-table'>
+                                        <colgroup>
+                                                <col class='hr-destination-tour-name-col'>
+                                                <col class='hr-destination-tour-duration-col'>
+                                                <col class='hr-destination-tour-price-col'>
+                                        </colgroup>
+                                        <thead>
+                                                <tr>
+                                                        <th scope='col' class='hr-destination-tour-name-heading'><?php esc_html_e( 'Tourist Destinations:', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-destination-tour-duration-heading'><?php esc_html_e( 'Duration', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-destination-tour-rate-heading'><?php esc_html_e( 'Rates', 'hotel-rates' ); ?></th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php foreach ( $destinations as $destination ) : ?>
+                                                        <tr>
+                                                                <td class='hr-destination-tour-name'><?php echo esc_html( $destination['label'] ); ?></td>
+                                                                <td class='hr-destination-tour-duration'><?php echo '' !== $destination['duration'] ? esc_html( $destination['duration'] ) : '&mdash;'; ?></td>
+                                                                <td class='hr-destination-tour-price'><?php echo wp_kses_post( Hotel_Rates_Currency::format_display_price( $destination['rate'] ) ); ?></td>
+                                                        </tr>
+                                                <?php endforeach; ?>
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+                <?php
+
+                return ob_get_clean();
+        }
+
+        /**
+         * Display the daily rates linked to a Self-Drive Rental product.
+         *
+         * Usage:
+         *   [specific_self_drive_rates]
+         *   [specific_self_drive_rates self_drive_rental_id=123]
+         *   [specific_self_drive_rates product_id=456]
+         */
+        public function specific_self_drive_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'self_drive_rental_id' => 0,
+                        'product_id'           => 0,
+                ), $atts, 'specific_self_drive_rates' );
+
+                $self_drive_rental_id = absint( $atts['self_drive_rental_id'] );
+                $product_id           = absint( $atts['product_id'] );
+
+                if ( ! $self_drive_rental_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $self_drive_rental_id = (int) get_post_meta( $product_id, '_hr_self_drive_rental_id', true );
+                        }
+                }
+
+                if ( ! $self_drive_rental_id ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'No Self-Drive Rental is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $self_drive_rental = Hotel_Rates_DB::get_self_drive_rental( $self_drive_rental_id );
+
+                if ( ! $self_drive_rental ) {
+                        return '<p class=hr-sc-error>' . esc_html__( 'The selected Self-Drive Rental could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $vehicles = json_decode( $self_drive_rental->vehicles ?? '[]', true );
+                $vehicles = Hotel_Rates_DB::normalize_self_drive_vehicles( is_array( $vehicles ) ? $vehicles : array() );
+
+                if ( empty( $vehicles ) ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'This Self-Drive Rental does not currently have vehicle rates configured.', 'hotel-rates' ) . '</p>';
+                }
+
+                ob_start();
+                ?>
+                <div class='hr-sc-wrap hr-specific-self-drive-rates' data-self-drive-rental-id='<?php echo esc_attr( $self_drive_rental_id ); ?>'>
+                        <div class='hr-sc-table-overflow'>
+                                <table class='hr-sc-table hr-self-drive-rate-table'>
+                                        <colgroup>
+                                                <col class='hr-self-drive-vehicle-col'>
+                                                <col class='hr-self-drive-seaters-col'>
+                                                <col class='hr-self-drive-price-col'>
+                                        </colgroup>
+                                        <thead>
+                                                <tr>
+                                                        <th scope='col' class='hr-self-drive-vehicle-heading'><?php esc_html_e( 'Vehicle Type', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-self-drive-seaters-heading'><?php esc_html_e( 'Seaters', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-self-drive-rate-heading'><?php esc_html_e( 'Rates', 'hotel-rates' ); ?></th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php foreach ( $vehicles as $vehicle ) : ?>
+                                                        <tr>
+                                                                <td class='hr-self-drive-vehicle'><?php echo esc_html( $vehicle['name'] ); ?></td>
+                                                                <td class='hr-self-drive-seaters'><?php echo esc_html( $vehicle['seaters'] ); ?></td>
+                                                                <td class='hr-self-drive-price'><?php echo wp_kses_post( Hotel_Rates_Currency::format_display_price( $vehicle['rate'] ) ); ?></td>
+                                                        </tr>
+                                                <?php endforeach; ?>
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+                <?php
+
+                return ob_get_clean();
+        }
+
+        /**
+         * Display the daily rates linked to a Motorbike Rental product.
+         *
+         * Usage:
+         *   [specific_motorbike_rates]
+         *   [specific_motorbike_rates motorbike_rental_id=123]
+         *   [specific_motorbike_rates product_id=456]
+         */
+        public function specific_motorbike_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'motorbike_rental_id' => 0,
+                        'product_id'          => 0,
+                ), $atts, 'specific_motorbike_rates' );
+
+                $motorbike_rental_id = absint( $atts['motorbike_rental_id'] );
+                $product_id          = absint( $atts['product_id'] );
+
+                if ( ! $motorbike_rental_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $motorbike_rental_id = (int) get_post_meta( $product_id, '_hr_motorbike_rental_id', true );
+                        }
+                }
+
+                if ( ! $motorbike_rental_id ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'No Motorbike Rental is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $motorbike_rental = Hotel_Rates_DB::get_motorbike_rental( $motorbike_rental_id );
+
+                if ( ! $motorbike_rental ) {
+                        return '<p class=hr-sc-error>' . esc_html__( 'The selected Motorbike Rental could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $models = json_decode( $motorbike_rental->models ?? '[]', true );
+                $models = Hotel_Rates_DB::normalize_motorbike_models( is_array( $models ) ? $models : array() );
+
+                if ( empty( $models ) ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'This Motorbike Rental does not currently have model rates configured.', 'hotel-rates' ) . '</p>';
+                }
+
+                ob_start();
+                ?>
+                <div class='hr-sc-wrap hr-specific-motorbike-rates' data-motorbike-rental-id='<?php echo esc_attr( $motorbike_rental_id ); ?>'>
+                        <div class='hr-sc-table-overflow'>
+                                <table class='hr-sc-table hr-motorbike-rate-table'>
+                                        <colgroup>
+                                                <col class='hr-motorbike-model-col'>
+                                                <col class='hr-motorbike-engine-col'>
+                                                <col class='hr-motorbike-price-col'>
+                                        </colgroup>
+                                        <thead>
+                                                <tr>
+                                                        <th scope='col' class='hr-motorbike-model-heading'><?php esc_html_e( 'Motorbike Model', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-motorbike-engine-heading'><?php esc_html_e( 'Engine', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-motorbike-rate-heading'><?php esc_html_e( 'Rates', 'hotel-rates' ); ?></th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php foreach ( $models as $model ) : ?>
+                                                        <tr>
+                                                                <td class='hr-motorbike-model'><?php echo esc_html( $model['name'] ); ?></td>
+                                                                <td class='hr-motorbike-engine'><?php echo '' !== $model['engine'] ? esc_html( $model['engine'] ) : '&mdash;'; ?></td>
+                                                                <td class='hr-motorbike-price'><?php echo wp_kses_post( Hotel_Rates_Currency::format_display_price( $model['rate'] ) ); ?></td>
+                                                        </tr>
+                                                <?php endforeach; ?>
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+                <?php
+
+                return ob_get_clean();
+        }
+
+        /**
+         * Display the capacity rates linked to a Boat Rental product.
+         *
+         * Usage:
+         *   [specific_boat_rates]
+         *   [specific_boat_rates boat_rental_id=123]
+         *   [specific_boat_rates product_id=456]
+         */
+        public function specific_boat_rates_table( $atts ) {
+                $atts = shortcode_atts( array(
+                        'boat_rental_id' => 0,
+                        'product_id'     => 0,
+                ), $atts, 'specific_boat_rates' );
+
+                $boat_rental_id = absint( $atts['boat_rental_id'] );
+                $product_id     = absint( $atts['product_id'] );
+
+                if ( ! $boat_rental_id ) {
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_queried_object_id();
+                        }
+
+                        if ( ! $product_id ) {
+                                $product_id = (int) get_the_ID();
+                        }
+
+                        if ( $product_id ) {
+                                $boat_rental_id = (int) get_post_meta( $product_id, '_hr_boat_rental_id', true );
+                        }
+                }
+
+                if ( ! $boat_rental_id ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'No Boat Rental is linked to this page.', 'hotel-rates' ) . '</p>';
+                }
+
+                $boat_rental = Hotel_Rates_DB::get_boat_rental( $boat_rental_id );
+
+                if ( ! $boat_rental ) {
+                        return '<p class=hr-sc-error>' . esc_html__( 'The selected Boat Rental could not be found.', 'hotel-rates' ) . '</p>';
+                }
+
+                $rates = json_decode( $boat_rental->rates ?? '[]', true );
+                $rates = Hotel_Rates_DB::normalize_boat_rates( is_array( $rates ) ? $rates : array() );
+
+                if ( empty( $rates ) ) {
+                        return '<p class=hr-sc-empty>' . esc_html__( 'This Boat Rental does not currently have capacity rates configured.', 'hotel-rates' ) . '</p>';
+                }
+
+                ob_start();
+                ?>
+                <div class='hr-sc-wrap hr-specific-boat-rates' data-boat-rental-id='<?php echo esc_attr( $boat_rental_id ); ?>'>
+                        <div class='hr-sc-table-overflow'>
+                                <table class='hr-sc-table hr-boat-rate-table'>
+                                        <colgroup>
+                                                <col class='hr-boat-capacity-col'>
+                                                <col class='hr-boat-price-col'>
+                                        </colgroup>
+                                        <thead>
+                                                <tr>
+                                                        <th scope='col' class='hr-boat-capacity-heading'><?php esc_html_e( 'Boat Capacity', 'hotel-rates' ); ?></th>
+                                                        <th scope='col' class='hr-boat-rate-heading'><?php esc_html_e( 'Rates', 'hotel-rates' ); ?></th>
+                                                </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php foreach ( $rates as $rate ) : ?>
+                                                        <tr>
+                                                                <td class='hr-boat-capacity'><?php echo esc_html( $rate['label'] ); ?></td>
+                                                                <td class='hr-boat-price'><?php echo wp_kses_post( Hotel_Rates_Currency::format_display_price( $rate['rate'] ) ); ?></td>
+                                                        </tr>
+                                                <?php endforeach; ?>
+                                        </tbody>
+                                </table>
+                        </div>
+                </div>
+                <?php
+
+                return ob_get_clean();
         }
 
         /**

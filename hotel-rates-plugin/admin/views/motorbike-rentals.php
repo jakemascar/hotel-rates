@@ -9,7 +9,7 @@ $day_options = $is_edit ? json_decode( $edit_motorbike_rental->day_options ?? '[
 $day_options = is_array( $day_options ) ? $day_options : array( 1, 2, 3, 4, 5, 6, 7 );
 
 if ( empty( $models ) ) {
-        $models[] = array( 'name' => '', 'rate' => '', 'stock' => 1 );
+        $models[] = array( 'name' => '', 'engine' => '', 'rate' => '', 'stock' => 1 );
 }
 ?>
 <div class="wrap hr-wrap">
@@ -48,6 +48,7 @@ if ( empty( $models ) ) {
                                         <thead>
                                                 <tr>
                                                         <th><?php esc_html_e( 'Model', 'hotel-rates' ); ?></th>
+                                                        <th><?php esc_html_e( 'Engine', 'hotel-rates' ); ?></th>
                                                         <th><?php esc_html_e( 'Daily Rate', 'hotel-rates' ); ?></th>
                                                         <th><?php esc_html_e( 'Available Qty', 'hotel-rates' ); ?></th>
                                                         <th><?php esc_html_e( 'Actions', 'hotel-rates' ); ?></th>
@@ -57,6 +58,7 @@ if ( empty( $models ) ) {
                                                 <?php foreach ( $models as $index => $model ) : ?>
                                                 <tr class="hr-motorbike-model-row">
                                                         <td><input type="text" name="models[<?php echo esc_attr( $index ); ?>][name]" value="<?php echo esc_attr( $model['name'] ?? '' ); ?>" class="widefat hr-motorbike-model-name" placeholder="<?php esc_attr_e( 'Yamaha Fazzio', 'hotel-rates' ); ?>" required></td>
+                                                        <td><input type="text" name="models[<?php echo esc_attr( $index ); ?>][engine]" value="<?php echo esc_attr( $model['engine'] ?? '' ); ?>" class="widefat hr-motorbike-model-engine" placeholder="<?php esc_attr_e( 'e.g., 125cc', 'hotel-rates' ); ?>" required></td>
                                                         <td><input type="number" name="models[<?php echo esc_attr( $index ); ?>][rate]" value="<?php echo esc_attr( $model['rate'] ?? '' ); ?>" class="widefat hr-motorbike-model-rate" step="0.01" min="0" placeholder="0.00" required></td>
                                                         <td><input type="number" name="models[<?php echo esc_attr( $index ); ?>][stock]" value="<?php echo esc_attr( $model['stock'] ?? 1 ); ?>" class="widefat hr-motorbike-model-stock" step="1" min="1" required></td>
                                                         <td><button type="button" class="button-link-delete hr-motorbike-model-remove"><?php esc_html_e( 'Remove', 'hotel-rates' ); ?></button></td>

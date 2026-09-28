@@ -1638,15 +1638,23 @@ class Hotel_Rates_DB {
                         $name = sanitize_text_field( $vehicle['name'] ?? '' );
                         $rate = self::maybe_null( $vehicle['rate'] ?? null );
                         $stock = max( 0, (int) ( $vehicle['stock'] ?? 0 ) );
+                        $seaters = sanitize_text_field( $vehicle['seaters'] ?? '5' );
+                        $seaters = str_replace( array( '–', '—' ), '-', $seaters );
+                        $seaters = preg_replace( '/\s+/', '', $seaters );
+
+                        if ( ! preg_match( '/^\d+(?:-\d+)?$/', $seaters ) ) {
+                                $seaters = '5';
+                        }
 
                         if ( '' === $name || null === $rate || $stock < 1 ) {
                                 continue;
                         }
 
                         $vehicles[] = array(
-                                'name'  => $name,
-                                'rate'  => max( 0, (float) $rate ),
-                                'stock' => $stock,
+                                'name'    => $name,
+                                'rate'    => max( 0, (float) $rate ),
+                                'stock'   => $stock,
+                                'seaters' => $seaters,
                         );
                 }
 
@@ -1696,6 +1704,7 @@ class Hotel_Rates_DB {
                         }
 
                         $name = sanitize_text_field( $model['name'] ?? '' );
+                        $engine = sanitize_text_field( $model['engine'] ?? '' );
                         $rate = self::maybe_null( $model['rate'] ?? null );
                         $stock = max( 0, (int) ( $model['stock'] ?? 0 ) );
 
@@ -1704,9 +1713,10 @@ class Hotel_Rates_DB {
                         }
 
                         $models[] = array(
-                                'name'  => $name,
-                                'rate'  => max( 0, (float) $rate ),
-                                'stock' => $stock,
+                                'name'   => $name,
+                                'engine' => $engine,
+                                'rate'   => max( 0, (float) $rate ),
+                                'stock'  => $stock,
                         );
                 }
 
